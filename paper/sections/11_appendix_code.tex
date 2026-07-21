@@ -6,51 +6,51 @@
 
 代码\ref{code:milp}对应\cref{eq:milp-start,eq:milp-inflow}：按天气生成行动弧，沙暴日不生成移动变量，并以两组流约束连接相邻时间层。
 
-\lstinputlisting[language=Python,firstline=37,lastline=100,caption={确定天气MILP的行动弧与位置流构造},label={code:milp}]{../src/desert/optimizer.py}
+\lstinputlisting[language=Python,firstline=37,lastline=100,caption={确定天气MILP的行动弧与位置流构造},label={code:milp}]{\RepoRoot src/desert/optimizer.py}
 
 \subsection{天气揭示前后的Bellman递推}
 
 代码\ref{code:mdp}对应\cref{eq:post-weather-bellman,eq:pre-weather-bellman}。任何正概率天气下没有可行后继，状态值即为负无穷，从实现层保证支撑集稳健可行。
 
-\lstinputlisting[language=Python,firstline=81,lastline=124,caption={第三关有限时域MDP的精确递推},label={code:mdp}]{../src/desert/level3_mdp.py}
+\lstinputlisting[language=Python,firstline=81,lastline=124,caption={第三关有限时域MDP的精确递推},label={code:mdp}]{\RepoRoot src/desert/level3_mdp.py}
 
 \subsection{完整最佳响应动态规划}
 
 代码\ref{code:best-response}对应\cref{eq:best-response-dp,eq:best-response-pruning}。状态标签同时受负重、资金和最短剩余距离剪枝，相同状态只保留更高矿山收入。
 
-\lstinputlisting[language=Python,firstline=125,lastline=193,caption={第五关固定对手下的完整最佳响应搜索},label={code:best-response}]{../src/desert/level5_game.py}
+\lstinputlisting[language=Python,firstline=125,lastline=193,caption={第五关固定对手下的完整最佳响应搜索},label={code:best-response}]{\RepoRoot src/desert/level5_game.py}
 
 \subsection{多人联合分组与逐日结算}
 
 代码\ref{code:joint-simulator}先按同向有向边和同矿建立分组，再由组大小计算消耗倍数和收益分成，对应\cref{eq:multi-resource,eq:multi-cash,eq:joint-transition}。
 
-\lstinputlisting[language=Python,firstline=119,lastline=180,caption={第六关多人拥挤分组、资源扣除与终值结算},label={code:joint-simulator}]{../src/desert/multiplayer.py}
+\lstinputlisting[language=Python,firstline=119,lastline=180,caption={第六关多人拥挤分组、资源扣除与终值结算},label={code:joint-simulator}]{\RepoRoot src/desert/multiplayer.py}
 
 \subsection{Wilson失败率区间}
 
 代码\ref{code:wilson}直接实现\cref{eq:wilson-center,eq:wilson-halfwidth}，并用于第四、六关所有样本外失败率区间。
 
-\lstinputlisting[language=Python,firstline=34,lastline=52,caption={Wilson得分区间的数值实现},label={code:wilson}]{../src/desert/evaluation.py}
+\lstinputlisting[language=Python,firstline=34,lastline=52,caption={Wilson得分区间的数值实现},label={code:wilson}]{\RepoRoot src/desert/evaluation.py}
 
 \subsection{保持平稳边际的Markov天气生成器}
 
 代码\ref{code:markov-weather}实现\cref{eq:markov-persistence}。构造函数逐行验证初始分布与转移矩阵，\texttt{from\_stationary}再以$\rho I+(1-\rho)\bm 1p^\top$生成转移概率；采样时只使用当前天气，不访问未来状态。
 
-\lstinputlisting[language=Python,firstline=42,lastline=136,caption={保持平稳边际的Markov天气模型与序列采样},label={code:markov-weather}]{../src/desert/weather.py}
+\lstinputlisting[language=Python,firstline=42,lastline=136,caption={保持平稳边际的Markov天气模型与序列采样},label={code:markov-weather}]{\RepoRoot src/desert/weather.py}
 
 \subsection{最短路偏离类与异质角色策略}
 
 代码\ref{code:level6-oracle}先按到终点的BFS距离，只沿距离减1的边深搜，从而完整枚举70条最短路；随后将每名玩家的路线、装载和错峰天数封装为可单边替换的策略剖面。这一结构保证最佳响应实验改动玩家$i$时，$\pi_{-i}$保持逐字节一致。
 
-\lstinputlisting[language=Python,firstline=10,lastline=130,caption={第六关最短路枚举、角色策略与单边偏离构造},label={code:level6-oracle}]{../src/desert/level6_oracle.py}
+\lstinputlisting[language=Python,firstline=10,lastline=130,caption={第六关最短路枚举、角色策略与单边偏离构造},label={code:level6-oracle}]{\RepoRoot src/desert/level6_oracle.py}
 
 \subsection{二维装载校准与预言机筛选}
 
 代码\ref{code:robust-calibration}对三种错峰角色枚举二维装载，并在模糊集所有点上以Wilson上界判定可行；代码\ref{code:oracle-screening}则对每名玩家完整扫描风险校准后的路线—错峰偏离类。
 
-\lstinputlisting[language=Python,firstline=213,lastline=265,caption={角色条件装载的分布鲁棒校准},label={code:robust-calibration}]{../scripts/analyze_robustness.py}
+\lstinputlisting[language=Python,firstline=213,lastline=265,caption={角色条件装载的分布鲁棒校准},label={code:robust-calibration}]{\RepoRoot scripts/analyze_robustness.py}
 
-\lstinputlisting[language=Python,firstline=319,lastline=361,caption={受约束最佳响应预言机的完整候选筛选},label={code:oracle-screening}]{../scripts/analyze_robustness.py}
+\lstinputlisting[language=Python,firstline=319,lastline=361,caption={受约束最佳响应预言机的完整候选筛选},label={code:oracle-screening}]{\RepoRoot scripts/analyze_robustness.py}
 
 \subsection{代码—公式—输出追踪关系}
 

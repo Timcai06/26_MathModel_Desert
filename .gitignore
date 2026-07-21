@@ -7,6 +7,8 @@ __pycache__/
 tmp/
 .omx/
 output/candidate_figures/
+output/overleaf_bundle/
+output/Overleaf_*/
 paper/build/
 *.aux
 *.fdb_latexmk

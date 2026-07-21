@@ -39,6 +39,10 @@
 - `paper/`：论文正文、图和表的唯一归档位置。
 - `tests/`：地图与模拟器测试。
 
+## Overleaf 协作
+
+论文采用与校模拟赛1一致的双入口结构：本地入口为 `paper/main.tex`；将项目根目录内容上传至 Overleaf 后，以根目录 `overleaf.tex` 为主文档并选择 XeLaTeX。`\PaperRoot` 与 `\RepoRoot` 会分别解析论文资源和附录代码路径。
+
 ## 复现
 
 ```bash
