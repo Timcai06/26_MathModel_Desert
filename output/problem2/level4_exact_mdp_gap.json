@@ -1,0 +1,32 @@
+{
+  "scope": {
+    "weather": "基准IID：晴朗0.45、高温0.45、沙暴0.10",
+    "initial_load": [
+      240,
+      240
+    ],
+    "purchases": "禁止；与240/240满负重阈值策略的实际运行条件一致",
+    "action_space": "完整5×5地图上的移动、停留、挖矿；当天气揭示后决策",
+    "interpretation": "区间只适用于固定装载、无补给子问题，不外推为原第四关全局最优区间"
+  },
+  "risk_constrained_dual": {
+    "risk_budget": 0.002,
+    "failure_penalty": 79800.0,
+    "lagrangian_policy_expected_final_value": 11080.058312368212,
+    "lagrangian_policy_failure_probability": 0.0013086543110405577,
+    "dual_upper_bound": 11239.658312368212,
+    "states_evaluated": 798565
+  },
+  "threshold_B5": {
+    "expected_final_value": 10161.635820048996,
+    "failure_probability": 0.0003066339634418208,
+    "states_evaluated": 5203,
+    "risk_feasible": true
+  },
+  "certified_interval": {
+    "feasible_lower_bound": 10161.635820048996,
+    "dual_upper_bound": 11239.658312368212,
+    "absolute_width": 1078.0224923192163,
+    "relative_width_to_upper": 0.09591239007087533
+  }
+}

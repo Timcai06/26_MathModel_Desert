@@ -2,7 +2,8 @@ import random
 import unittest
 
 from desert.evaluation import evaluate_weather_sequences
-from desert.level4_policies import DirectRobustPolicy, shortest_distance
+from desert.level4_policies import DirectRobustPolicy, MineThresholdPolicy, shortest_distance
+from desert.level4_mdp import Level4FixedLoadMDP
 from desert.level4_search import candidate_grid
 from desert.model import Weather
 from desert.online import simulate_policy
@@ -47,6 +48,15 @@ class OnlineTests(unittest.TestCase):
         )
         self.assertEqual(summary.failure_rate, 1)
         self.assertEqual(summary.mean_penalized_value, 0)
+
+    def test_level4_exact_benchmark_matches_all_sunny_threshold_replay(self) -> None:
+        scenario = get_scenario(4)
+        model = IIDWeatherModel({Weather.SUNNY: 1.0})
+        result = Level4FixedLoadMDP(scenario, model, 240, 240).solve(5)
+        replay = simulate_policy(scenario, MineThresholdPolicy(5, 240, 240), (Weather.SUNNY,) * scenario.deadline)
+        self.assertGreaterEqual(result.optimal.expected_final_value, result.threshold.expected_final_value)
+        self.assertEqual(result.threshold.failure_probability, 0)
+        self.assertEqual(result.threshold.expected_final_value, replay.result.final_value)
 
 
 if __name__ == "__main__":

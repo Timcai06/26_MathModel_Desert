@@ -186,6 +186,35 @@ $\rho=0.70$只作为集合外破坏性检验，不参与选模。对候选$\thet
 
 IID-B5策略保留为“边际频率可信且无持续性”的效率基准，B9策略则作为信息不足时的最终稳健推荐。两者差异不是算法冲突，而是保护范围扩大后的安全成本。值得注意的是，B9在高持续性下的均值略高于$\rho=0$，原因是阈值策略会在成段晴朗期连续挖矿；风险控制仍由失败率上界而非均值单调性决定。
 
+\subsection{固定装载精确基准与风险对偶区间}
+
+为量化IID效率策略B5并非全局动态规划的代价，固定其实际运行条件：初始装载为$(w_0,f_0)=(240,240)$，已达1200千克负重上限，故不允许村庄补给；但保留完整$5\times5$地图、30天期限以及移动、停留、挖矿三类行动。此时天气揭示前状态为$s=(t,l,w,f)$，终点价值为
+\begin{equation}
+G(s)=M_0-5w_0-10f_0+R(s)+\frac52w+5f,
+\label{eq:fixed-load-terminal}
+\end{equation}
+其中$R(s)$为累计挖矿收益；未到终点、资源耗尽或超过期限均记为0。于是固定装载子问题的风险约束最优值为
+\begin{equation}
+V^\star_\alpha=\max_{\pi}\ \mathbb E[J_\pi]
+\quad\text{s.t.}\quad \Pr_\pi(F)\le\alpha,
+\qquad \alpha=0.2\%.
+\label{eq:fixed-load-chance-mdp}
+\end{equation}
+这里$F$为失败事件。直接枚举连续概率预算会破坏普通Bellman递推，故用拉格朗日松弛给出严格上界：对任意$\lambda\ge0$，
+\begin{equation}
+V^\star_\alpha\le
+\max_\pi\left\{\mathbb E[J_\pi]-\lambda\Pr_\pi(F)\right\}
++\lambda\alpha=:U(\lambda).
+\label{eq:fixed-load-dual}
+\end{equation}
+右侧仍是标准天气先揭示MDP，能精确遍历798565个状态。取$\lambda=79800$元，得到$U(\lambda)=11239.66$元；对应拉格朗日最优策略失败率为$0.1309\%$。另一方面，B5的精确递推值为10161.64元、失败率为$0.0307\%<0.2\%$，因而它是\cref{eq:fixed-load-chance-mdp}的可行下界。综上
+\begin{equation}
+10161.64\le V^\star_{0.2\%}\le11239.66,
+\qquad \frac{11239.66-10161.64}{11239.66}=9.59\%.
+\label{eq:fixed-load-certified-gap}
+\end{equation}
+该区间衡量的是B5在\emph{固定装载、无补给、基准IID}子问题中的风险约束动态决策缺口；它既不是整个第四关的全局最优区间，也不适用于B9的Markov分布鲁棒推荐。
+
 \begin{resultbox}{问题二结论}
-第三关选择54/54箱三日直达，属于全支撑精确结论\evidence{E2}。第四关在IID假设下以240/240箱、B5为效率方案；把连续天气纳入$\mathcal P$后，最终推荐240/240箱、B9阈值策略，属于明确模糊集和风险预算下的分布鲁棒样本外推荐\evidence{E4}。
+第三关选择54/54箱三日直达，属于全支撑精确结论\evidence{E2}。第四关在IID假设下以240/240箱、B5为效率方案；固定装载子问题中其风险约束最优性区间宽度为9.59\%。把连续天气纳入$\mathcal P$后，最终推荐240/240箱、B9阈值策略，属于明确模糊集和风险预算下的分布鲁棒样本外推荐\evidence{E4}。
 \end{resultbox}

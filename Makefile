@@ -3,7 +3,7 @@ LATEXMK ?= latexmk
 VENV_PYTHON := .venv/bin/python
 PYTHONPATH_VALUE := src
 
-.PHONY: setup test solve-known analyze-problem2 optimize-level4 analyze-problem3 analyze-robustness figures sync-paper-code paper-assets paper result verify deliver all
+.PHONY: setup test solve-known analyze-problem2 optimize-level4 analyze-level4-gap analyze-problem3 analyze-robustness figures sync-paper-code paper-assets paper result verify deliver all
 
 setup:
 	$(PYTHON) -m venv .venv
@@ -23,6 +23,9 @@ analyze-problem2:
 optimize-level4:
 	PYTHONPATH=$(PYTHONPATH_VALUE) $(PYTHON) scripts/optimize_level4.py
 
+analyze-level4-gap:
+	PYTHONPATH=$(PYTHONPATH_VALUE) $(PYTHON) scripts/analyze_level4_exact_gap.py
+
 analyze-problem3:
 	PYTHONPATH=$(PYTHONPATH_VALUE) $(PYTHON) scripts/analyze_problem3.py
 
@@ -36,6 +39,7 @@ sync-paper-code:
 	mkdir -p paper/code
 	cp src/desert/optimizer.py paper/code/optimizer.py
 	cp src/desert/level3_mdp.py paper/code/level3_mdp.py
+	cp src/desert/level4_mdp.py paper/code/level4_mdp.py
 	cp src/desert/level5_game.py paper/code/level5_game.py
 	cp src/desert/multiplayer.py paper/code/multiplayer.py
 	cp src/desert/evaluation.py paper/code/evaluation.py

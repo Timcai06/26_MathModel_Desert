@@ -20,6 +20,12 @@
 
 \lstinputlisting[language=Python,firstline=125,lastline=193,caption={第五关固定对手下的完整最佳响应搜索},label={code:best-response}]{code/level5_game.py}
 
+\subsection{固定装载MDP与风险对偶}
+
+代码\ref{code:level4-exact}实现\cref{eq:fixed-load-chance-mdp,eq:fixed-load-dual}的共同状态转移。失败分支严格返回0，成功终点才结算初始剩余现金、矿山收益和半价回收价值；因此拉格朗日惩罚不会把失败路径误计为成功收益。
+
+\lstinputlisting[language=Python,firstline=40,lastline=150,caption={第四关固定装载精确MDP、失败终值与拉格朗日评分},label={code:level4-exact}]{code/level4_mdp.py}
+
 \subsection{多人联合分组与逐日结算}
 
 代码\ref{code:joint-simulator}先按同向有向边和同矿建立分组，再由组大小计算消耗倍数和收益分成，对应\cref{eq:multi-resource,eq:multi-cash,eq:joint-transition}。
@@ -64,6 +70,7 @@
 时空网络MILP & \path{optimizer.py} & 求解状态、目标值、逐日位置和资源账本\\
 有限时域MDP & \path{level3_mdp.py} & 状态数、初购、Bellman值、全序列误差\\
 风险阈值策略 & \path{level4_policies.py} & 候选前沿、失败率、Wilson区间\\
+固定装载精确基准 & \path{level4_mdp.py} & 风险可行下界、拉格朗日对偶上界\\
 最佳响应博弈 & \path{level5_game.py} & 均衡路径、两方偏离增益\\
 多人联合转移 & \path{multiplayer.py} & 共享边/矿山玩家日、角色均值、失败率\\
 Markov天气 & \path{weather.py} & 平稳边际、转移概率、连续沙暴统计\\
