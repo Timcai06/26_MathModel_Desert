@@ -3,7 +3,7 @@ LATEXMK ?= latexmk
 VENV_PYTHON := .venv/bin/python
 PYTHONPATH_VALUE := src
 
-.PHONY: setup test solve-known analyze-problem2 optimize-level4 analyze-problem3 analyze-robustness figures paper-assets paper result verify deliver all
+.PHONY: setup test solve-known analyze-problem2 optimize-level4 analyze-problem3 analyze-robustness figures sync-paper-code paper-assets paper result verify deliver all
 
 setup:
 	$(PYTHON) -m venv .venv
@@ -32,10 +32,21 @@ analyze-robustness:
 figures:
 	PYTHONPATH=$(PYTHONPATH_VALUE) $(VENV_PYTHON) scripts/generate_figures.py
 
+sync-paper-code:
+	mkdir -p paper/code
+	cp src/desert/optimizer.py paper/code/optimizer.py
+	cp src/desert/level3_mdp.py paper/code/level3_mdp.py
+	cp src/desert/level5_game.py paper/code/level5_game.py
+	cp src/desert/multiplayer.py paper/code/multiplayer.py
+	cp src/desert/evaluation.py paper/code/evaluation.py
+	cp src/desert/weather.py paper/code/weather.py
+	cp src/desert/level6_oracle.py paper/code/level6_oracle.py
+	cp scripts/analyze_robustness.py paper/code/analyze_robustness.py
+
 paper-assets: figures
 	PYTHONPATH=$(PYTHONPATH_VALUE) $(PYTHON) scripts/generate_paper_tables.py
 
-paper: paper-assets
+paper: paper-assets sync-paper-code
 	cd paper && $(LATEXMK) -norc -xelatex -interaction=nonstopmode -halt-on-error -outdir=build main.tex
 
 result:
