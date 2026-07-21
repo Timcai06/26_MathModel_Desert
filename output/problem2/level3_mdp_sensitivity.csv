@@ -1,0 +1,4 @@
+﻿hot_probability,initial_water,initial_food,expected_final_value,enumerated_expected_value,p05_value,minimum_value,maximum_value,failed_weather_sequences,states_evaluated,all_sunny_arrival_day,all_sunny_final_value,all_sunny_actions,all_hot_arrival_day,all_hot_final_value,all_hot_actions
+0.2,54,54,9382.0,9381.999999999958,9270.0,9190.0,9430.0,0,6425464,3,9430.0,行走-行走-行走,3,9190.0,行走-行走-行走
+0.5,54,54,9310.0,9310.0,9190.0,9190.0,9430.0,0,6425464,3,9430.0,行走-行走-行走,3,9190.0,行走-行走-行走
+0.8,54,54,9238.0,9237.999999999969,9190.0,9190.0,9430.0,0,6425464,3,9430.0,行走-行走-行走,3,9190.0,行走-行走-行走
