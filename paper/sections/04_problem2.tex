@@ -2,7 +2,7 @@
 
 \subsection{信息约束与概率边界}
 
-设 $\mathcal F_t=\sigma(z_1,\ldots,z_t)$ 是第 $t$ 日行动前可用信息，策略必须满足 $a_t$ 对 $\mathcal F_t$ 可测，即不得读取 $z_{t+1:T}$。天气概率并非题面事实，本文作如下条件设定：第三关无沙暴，以高温概率 $p_h\in\{0.2,0.5,0.8\}$ 的独立分布做精确敏感性；第四关分别使用
+设$H_t=(S_0,z_1,a_1,\ldots,S_{t-1},z_t)$为行动前完整历史，$\mathcal F_t=\sigma(H_t)$。在线策略$\pi_t(H_t)$必须满足\cref{eq:nonanticipativity}；代码层面只向策略对象传入历史记录和当天气象，未来数组封装在外部环境中，因而信息约束不是文字承诺，而是接口约束。天气概率并非题面事实，本文作如下条件设定：第三关无沙暴，以高温概率$p_h\in\{0.2,0.5,0.8\}$的独立分布做精确敏感性；第四关分别使用
 \[
 (p_s,p_h,p_b)=(0.50,0.45,0.05),\ (0.45,0.45,0.10),\ (0.35,0.50,0.15)
 \]
@@ -10,13 +10,30 @@
 
 \subsection{第三关有限时域精确 MDP}
 
-第三关没有村庄，现金只受初始采购、挖矿和终点回收影响。天气揭示前状态可压缩为 $s_t=(t,l_t,w_t,f_t)$。令 $V_t(s)$ 为第 $t$ 日开始前的最优期望终值，观察天气 $z$ 后的 Bellman 方程为
+第三关没有村庄，现金只受初始采购、挖矿和终点回收影响。给定初购后，历史对未来的作用可由充分状态$s=(l,w,f)$概括。为准确体现“先观测天气再行动”，分别定义天气揭示前价值$V_t(s)$和揭示后价值$Q_t(s,z)$：
+\begin{align}
+Q_t(s,z)&=\max_{a\in\mathcal A(s,z)}
+\left\{R(s,a,z)+V_{t+1}\bigl(F(s,a,z)\bigr)\right\},
+\label{eq:post-weather-bellman}\\
+V_t(s)&=\sum_{z\in\mathcal Z}p_zQ_t(s,z).
+\label{eq:pre-weather-bellman}
+\end{align}
+其中即时收益$R=B$当且仅当挖矿，否则为0；$F$按\cref{eq:resource-transition}扣减资源并更新位置。边界条件为
 \begin{equation}
-V_t(s)=\sum_{z\in\{\text{晴朗,高温}\}}p(z)
-\max_{a\in\mathcal A(s,z)}\left\{r(s,a,z)+V_{t+1}(F(s,a,z))\right\}.
-\label{eq:bellman}
+V_t(v_T,w,f)=\tfrac12p_ww+\tfrac12p_ff,\qquad
+V_{T+1}(l,w,f)=-\infty\quad(l\ne v_T).
+\label{eq:mdp-boundary}
 \end{equation}
-若到达终点，价值为现金与剩余物资半价回收；若第10日后尚未到达，价值为负无穷。为避免“期望高但某条支撑天气必败”，只要某天气概率为正，对应动作后的状态必须在全部支撑上可延续到终点。
+现金在途中不影响行动可行性，故可从状态中剔除，并在初购层补回。完整优化为
+\begin{equation}
+\max_{w_0,f_0\in\mathbb Z_+}
+\left\{M_0-p_ww_0-p_ff_0+V_1(v_S,w_0,f_0)\right\}
+\quad\text{s.t. }3w_0+2f_0\le C.
+\label{eq:mdp-initial-load}
+\end{equation}
+若某个$p_z>0$而$Q_t(s,z)=-\infty$，则令$V_t(s)=-\infty$。这一“支撑集稳健可行”递推排除了以小概率必败换取较高条件均值的方案。
+
+有限时域和整数资源使状态空间有限。采用记忆化递归后，每个$(t,l,w,f)$只计算一次；同一状态、同一资源消耗下仅保留收益最大的行动。最坏复杂度为$O(T|V|WF|\mathcal Z|\mathcal A|)$，其中$W,F$分别是容量给出的水、食物整数上界。
 
 程序枚举全部整数初始采购和可达状态。每档高温概率评估6425464个状态，并对全部 $2^{10}=1024$ 条天气序列逐条回放，Bellman期望与枚举加权均值误差小于 $10^{-6}$。
 
@@ -35,7 +52,13 @@ V_t(s)=\sum_{z\in\{\text{晴朗,高温}\}}p(z)
 \end{tabular}
 \end{table}
 
-三档概率下策略均为 $1\to4\to6\to13$ 连续移动三天。54箱水、54箱食物恰好覆盖三天全高温移动；绕矿需要五个移动日，矿山基础收益仅200元，额外稳健装载和绕行成本超过挖矿收益。
+三档概率下策略均为$1\to4\to6\to13$连续移动三天。全高温路径的最低资源由
+\begin{equation}
+w_0^{\min}=3\times2c^w_{\text{高温}}=54,\qquad
+f_0^{\min}=3\times2c^f_{\text{高温}}=54
+\label{eq:level3-minload}
+\end{equation}
+给出，恰好等于MDP解。绕矿需要五个移动日，矿山基础收益仅200元，额外稳健装载和绕行成本超过挖矿收益。因此“54/54直达”既有Bellman最优性，也有由最坏支撑资源下界给出的结构解释。
 
 \begin{figure}[H]
   \centering
@@ -46,17 +69,33 @@ V_t(s)=\sum_{z\in\{\text{晴朗,高温}\}}p(z)
 
 \subsection{第四关鲁棒阈值策略}
 
-第四关到矿山最短5步、矿山到终点3步。候选策略先到矿山；当日只有在挖矿后三项条件同时满足时才挖矿：
+第四关状态空间远大于第三关，且含沙暴、矿山和较长时域，直接精确DP在多档参数搜索中代价过高。我们从“挖矿后仍必须保证返程”的充分条件出发构造可解释阈值策略。设$d_t=d(l_t,v_T)$为当前位置到终点最短边数，$N_b(t)$为截至当天已观察到的沙暴数，$B$为设计的总沙暴预算，剩余预算为
+\begin{equation}
+\widehat B_t=(B-N_b(t))_+.
+\label{eq:remaining-storm-budget}
+\end{equation}
+若以后最多再遇$\widehat B_t$个沙暴，则$d_t$个移动日按高温上界需$2d_tc_h^r$，沙暴停留需$\widehat B_tc_b^r$。因此第$t$日挖矿后保持返程可行的充分条件为
 \begin{align}
-T-t-1 &\ge d(l_t,T)+B_t,\\
-w_t-3c^w_{z_t} &\ge 2d(l_t,T)c^w_{\text{高温}}+B_t c^w_{\text{沙暴}},\\
-f_t-3c^f_{z_t} &\ge 2d(l_t,T)c^f_{\text{高温}}+B_t c^f_{\text{沙暴}},
+T-t &\ge d_t+\widehat B_t,\label{eq:threshold-time}\\
+w_{t-1}-3c^w_{z_t} &\ge 2d_tc^w_{\text{高温}}+\widehat B_t c^w_{\text{沙暴}},
+\label{eq:threshold-water}\\
+f_{t-1}-3c^f_{z_t} &\ge 2d_tc^f_{\text{高温}}+\widehat B_t c^f_{\text{沙暴}}.
+\label{eq:threshold-food}
 \end{align}
-其中 $B_t=\max\{0,B-N_b(t)\}$ 是沙暴预算扣除已观察沙暴后的剩余额度。不满足时，非沙暴日立即向终点移动，沙暴日停留。
+式中右端第一项的系数2来自移动消耗倍数，第二项的系数1来自沙暴停留。三式任一不满足时，非沙暴日立即沿最短路向终点移动，沙暴日停留。阈值不是对所有天气路径的绝对保证，而是把风险偏好压缩到一个可搜索、可解释的整数$B$。
 
 \subsection{567候选选模与独立测试}
 
-枚举 $B=3,\ldots,9$，初始水食180--280箱、步长10，并过滤负重与现金不合法组合，得到567个候选。训练阶段在基准和不利分布各用1000条配对天气；风险约束预先定为基准失败率不超过0.2\%、不利分布不超过0.5\%，可行候选中最大化不利分布总体效用。入选水240箱、食物240箱、(B=5)。\cref{fig:level4-frontier}显示，入选点不是训练均值最大的点，而是风险预算内的收益折中。
+枚举$B=3,\ldots,9$，初始水食180--280箱、步长10，并过滤负重与现金不合法组合，得到567个候选$\Theta$。对每个$\theta\in\Theta$，在基准和不利分布各使用1000条相同的配对天气序列，减少候选比较中的抽样噪声。训练选择规则在模拟前固定为
+\begin{equation}
+\widehat\theta=\arg\max_{\theta\in\Theta}\widehat\mu_{\mathrm{adv}}(\theta)
+\quad\text{s.t.}\quad
+\widehat p_{\mathrm{base}}(\theta)\le0.002,
+\quad
+\widehat p_{\mathrm{adv}}(\theta)\le0.005,
+\label{eq:level4-selection}
+\end{equation}
+其中$\widehat\mu$按\cref{eq:penalized-objective}把失败样本记0。入选水240箱、食物240箱、$B=5$。\cref{fig:level4-frontier}显示，入选点不是训练均值最大的点，而是风险预算内的收益折中。
 
 \begin{figure}[H]
   \centering
@@ -65,7 +104,13 @@ f_t-3c^f_{z_t} &\ge 2d(l_t,T)c^f_{\text{高温}}+B_t c^f_{\text{沙暴}},
   \label{fig:level4-frontier}
 \end{figure}
 
-最终测试改用种子20260821起的20000条新天气。失败终值记为0，失败率用Wilson区间，均值用正态近似区间。
+最终测试改用从未参与选模的种子20260821，每种天气生成20000条新序列。设$I_j$为第$j$条序列的失败指示，$Y_j$为失败记0后的终值，则报告
+\begin{equation}
+\widehat p=\frac1N\sum_{j=1}^NI_j,\qquad
+\widehat\mu=\frac1N\sum_{j=1}^NY_j.
+\label{eq:oos-estimators}
+\end{equation}
+失败率使用Wilson区间，均值使用样本标准误差区间；完整公式和图形检验见附录。
 
 \begin{table}[H]
 \centering

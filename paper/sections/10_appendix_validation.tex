@@ -1,0 +1,68 @@
+\section{统计检验、敏感性与公平性附图}
+
+\subsection{样本外失败率区间}
+
+\cref{fig:oos-risk-intervals}同时画出失败率点估计、95\% Wilson区间和选模前固定的风险预算。第四关每档天气使用20000条序列；第六关每档天气使用20000局、60000个玩家观测。两关在不利天气下的区间上界分别为0.4809\%和0.4697\%，仍低于0.5\%预算；因此结论并非只依赖点估计“刚好过线”。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.98\textwidth]{oos_risk_intervals.pdf}
+  \caption{第四、六关入选策略的样本外失败率与95\% Wilson区间}
+  \label{fig:oos-risk-intervals}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{风险预算的区间上界复核}
+\label{tab:risk-budget-audit}
+\begin{tabular}{llrrr}
+\toprule
+关卡 & 天气模型 & 点估计/\% & 95\%上界/\% & 预算/\%\\
+\midrule
+第四关 & 基准 & 0.0550 & 0.0985 & 0.2000\\
+第四关 & 不利 & 0.3850 & 0.4809 & 0.5000\\
+第六关 & 基准 & 0.0167 & 0.0307 & 0.2000\\
+第六关 & 不利 & 0.4150 & 0.4697 & 0.5000\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{初始装载的局部稳健性}
+
+\cref{fig:loading-robustness}给出第六关$q=180,185,\ldots,220$的完整网格结果。装载增加使失败率下降，但每多带5箱水和5箱食物，初购成本增加75元，并挤压终值；故风险约束的可行边界比单纯追求“越安全越好”更有决策意义。入选点$q=185$在训练不利天气下失败率0.2778\%，相邻的$q=180$为0.6778\%、超过0.5\%预算；选择对一个网格步长的扰动有清晰解释。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.98\textwidth]{loading_robustness.pdf}
+  \caption{第六关分路直达策略的装载—风险—收益敏感性}
+  \label{fig:loading-robustness}
+\end{figure}
+
+\subsection{角色差异与事前公平}
+
+固定三条路线时，前两种角色因路径对称而样本均值相等，第三种错峰角色承受额外等待损失；天气越不利，角色差从50.2元增至113.8元。\cref{eq:exante-fairness}证明，出发前均匀随机置换角色后，每名玩家的事前期望都等于三条横线所示均值。该机制不改变任何一局中的路线集合，因此不会重新引入同向边拥挤。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.98\textwidth]{role_fairness.pdf}
+  \caption{第六关固定角色收益与随机置换后的事前公平值}
+  \label{fig:role-fairness}
+\end{figure}
+
+\subsection{可证伪的复核清单}
+
+\begin{table}[H]
+\centering
+\caption{评审可独立复核的中间证据}
+\begin{tabularx}{0.96\textwidth}{L{2.4cm}Y Y}
+\toprule
+结论 & 可复核文件 & 反证条件\\
+\midrule
+确定天气全局最优 & \path{known_weather_exact.json}、逐日流水 & 求解器非Optimal或任一回放约束残差非0\\
+第三关精确MDP & \path{level3_mdp_sensitivity.csv} & Bellman值与1024序列加权值不一致\\
+第四关条件推荐 & \path{level4_parameter_search.csv}、\path{level4_oos_validation.csv} & 测试样本参与选模或区间上界超预算\\
+第五关纯策略均衡 & \path{problem3/summary.json} & 任一完整最佳响应偏离增益为正\\
+第六关风险推荐 & \path{level6_load_search.csv}、\path{level6_oos_comparison.csv} & 新分布下失败区间越界或存在更优可行策略\\
+\bottomrule
+\end{tabularx}
+\end{table}

@@ -1,6 +1,6 @@
 \section{统一建模框架}
 
-\subsection{基本符号}
+\subsection{符号、决策时序与基本假设}
 
 \begin{table}[H]
 \centering
@@ -11,57 +11,102 @@
 符号 & 含义 & 符号 & 含义\\
 \midrule
 $G=(V,E)$ & 区域邻接图 & $T$ & 截止日期\\
-$z_t$ & 第 $t$ 天天气 & $l_t$ & 日末位置\\
+$z_t\in\mathcal Z$ & 第$t$天天气 & $l_t$ & 第$t$日日末位置\\
 $w_t,f_t$ & 日末水、食物库存 & $m_t$ & 日末现金\\
-$a_t$ & 移动、停留或挖矿行动 & $b^w_t,b^f_t$ & 当日购买量\\
-$c^r_z$ & 资源 $r$ 在天气 $z$ 下的基础消耗 & $\lambda_t$ & 行动消耗倍数\\
+$a_t$ & 移动、停留或挖矿行动 & $b_t^{r,-},b_t^{r,+}$ & 行动前、后购买量\\
+$c_z^r$ & 天气$z$下资源$r$的基础消耗 & $\lambda_t$ & 行动消耗倍数\\
 $B$ & 矿山基础收益 & $C$ & 负重上限\\
-$n,k$ & 总玩家数、同组行动人数 & $J_i$ & 玩家 $i$ 的终值\\
+$\tau$ & 首次到达终点的日期 & $\mathcal F_t$ & 第$t$日可用信息集\\
+$k_{t,e},k_{t,v}$ & 同边移动、同村购买人数 & $J_i$ & 玩家$i$的终值\\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-\subsection{状态转移和收益}
-
-单人状态写为 $s_t=(t,l_t,w_t,f_t,m_t)$。设 $r\in\{w,f\}$，行动倍数为
-\[
+本文把每一天严格拆成“天气揭示—行动前采购—行动—资源消耗与收益结算—行动后采购”五步。记上日日末状态为
+\begin{equation}
+S_{t-1}=(l_{t-1},w_{t-1},f_{t-1},m_{t-1}),
+\end{equation}
+行动前采购后的临时库存为
+\begin{equation}
+\widetilde r_{t-1}=r_{t-1}+b_t^{r,-},\qquad r\in\{w,f\}.
+\label{eq:pre-purchase}
+\end{equation}
+观察当天气象$z_t$后选择$a_t$，消耗后、行动后采购前的库存为
+\begin{equation}
+\overline r_t=\widetilde r_{t-1}-\lambda(a_t)c_{z_t}^{r},
+\qquad
 \lambda(a_t)=
 \begin{cases}
 2,&a_t=\text{移动},\\
 1,&a_t=\text{停留},\\
 3,&a_t=\text{挖矿}.
 \end{cases}
-\]
-则不含购买时的库存转移为
-\begin{equation}
-r_t=r_{t-1}-\lambda(a_t)c^r_{z_t},\qquad r_t\ge0,
-\label{eq:resource}
+\label{eq:resource-transition}
 \end{equation}
-并在每日采购后满足
+最后有$r_t=\overline r_t+b_t^{r,+}$。这一区分很重要：到达村庄当天只能用出发前已有物资完成移动，不能用“尚未到达的村庄补给”倒推当日可行性。因此模型同时要求
 \begin{equation}
-3w_t+2f_t\le1200.
-\label{eq:capacity}
+\overline w_t\ge0,\quad \overline f_t\ge0,\qquad
+3\widetilde w_{t-1}+2\widetilde f_{t-1}\le C,\quad
+3w_t+2f_t\le C.
+\label{eq:capacity-two-stage}
 \end{equation}
-若在矿山挖矿，现金增加 $B$；村庄购买单价是基准价两倍；终点终值为
+
+为使六关可以在同一框架内比较，作如下最小假设：资源与现金均按题面单位离散；玩家同日共享同一天气；只有位于村庄时可以购买，初始购买按基准价、村庄购买按题面倍率；到达终点后进入零消耗吸收状态；未在截止日前到达或中途资源不可行为失败。除第二、三问的条件概率模型外，不额外假定未来天气可见。
+
+\subsection{统一状态转移与终值}
+
+设$\kappa_t$为当日采购价格倍率，$I_t^M$为挖矿指示变量，则单人现金转移为
 \begin{equation}
-J=m_\tau+\tfrac12p_ww_\tau+\tfrac12p_ff_\tau,
+m_t=m_{t-1}+BI_t^M-
+\sum_{r\in\{w,f\}}p_r\bigl(\kappa_t^-b_t^{r,-}+\kappa_t^+b_t^{r,+}\bigr).
+\label{eq:cash-general}
+\end{equation}
+位置由映射$L$更新：$l_t=L(l_{t-1},a_t)$。将\cref{eq:pre-purchase,eq:resource-transition,eq:cash-general}合并，记确定性日转移为
+\begin{equation}
+S_t=\Phi(S_{t-1},z_t,a_t,\bm b_t^-,\bm b_t^+).
+\label{eq:unified-transition}
+\end{equation}
+若$\tau=\inf\{t:l_t=v_T\}\le T$，题面终值为
+\begin{equation}
+J=m_\tau+\frac12p_ww_\tau+\frac12p_ff_\tau;
 \label{eq:terminal}
 \end{equation}
-其中 $\tau\le T$ 为首次到达日。
+若失败则令$J=0$。因此随机天气下真正用于选模的目标是总体效用
+\begin{equation}
+U(\pi)=\mathbb E_\pi[J]
+=\Pr_\pi(\tau\le T)\,\mathbb E_\pi[J\mid \tau\le T],
+\label{eq:penalized-objective}
+\end{equation}
+而不是只统计成功者的条件均值。\cref{eq:penalized-objective}也解释了为何高收益但高失败率的挖矿策略会被风险约束淘汰。
+
+\subsection{信息结构与可行策略集}
+
+确定天气关卡中$z_{1:T}$在第0日已知；在线关卡中定义
+\begin{equation}
+\mathcal F_t=\sigma(z_1,\ldots,z_t,S_0,\ldots,S_{t-1}),
+\end{equation}
+并要求策略$\pi_t$对$\mathcal F_t$可测，即
+\begin{equation}
+(a_t,\bm b_t^-,\bm b_t^+)=\pi_t(\mathcal F_t),
+\qquad
+\pi_t\ \text{不得依赖}\ z_{t+1:T}.
+\label{eq:nonanticipativity}
+\end{equation}
+多人情形把其他玩家的历史位置、公开行动和共同天气加入$\mathcal F_t$，但仍不允许读取未来。对任一状态和天气，合法行动集记为$\mathcal A(S_{t-1},z_t)$；它同时编码邻接、沙暴禁行、矿山位置、采购位置、非负库存、现金与负重限制。于是六关的差异被压缩为三件事：天气信息量、参与者数量，以及求解$\max_{\pi\in\Pi}U(\pi)$时采用的证据强度。
 
 \subsection{证据等级与统一验收}
 
 为避免把不同强度的计算结论混在一起，本文采用四级证据：
 
 \begin{enumerate}
-  \item \evidence{E1} 求解器最优证书与独立回放，对应“全局最优”；
-  \item \evidence{E2} 完整状态或天气支撑精确枚举，对应“给定模型下精确最优”；
-  \item \evidence{E3} 完整最佳响应检验，对应“纯策略均衡”；
-  \item \evidence{E4} 独立种子样本外评估与区间，对应“条件推荐”。
+  \item \evidence{E1} 求解器全局最优证书与独立回放，对应“全局最优”；
+  \item \evidence{E2} 完整状态空间和天气支撑精确枚举，对应“给定模型下精确最优”；
+  \item \evidence{E3} 完整最佳响应检验，对应“给定策略空间内的纯策略均衡”；
+  \item \evidence{E4} 独立种子样本外评估、置信区间与敏感性分析，对应“条件推荐”。
 \end{enumerate}
 
-所有策略都经过独立规则入口回放。Monte Carlo 中失败样本的终值统一记为0，成功样本均值只用于解释“到达后的财富”，选模和结论使用含失败的总体效用。
+每个结果都经过与求解程序解耦的规则入口回放；每个随机策略都同时报告失败率、Wilson区间、含失败总体均值及其区间。正文只引用通过验收的图表，候选图与中间产物保留在独立输出目录，不进入最终论文。
 
 \begin{resultbox}{统一边界}
-问题一可以证明全局最优；第三、五关可以在给定有限支撑或策略空间内精确验证；第四、六关因天气分布未给，只能在声明分布和风险预算下推荐。四类表述不可互换。
+问题一可以证明全局最优；第三、五关可以在给定有限支撑或策略空间内精确验证；第四、六关因题面未给天气分布，只能在声明分布和预设风险预算下推荐。四类表述不可互换。
 \end{resultbox}

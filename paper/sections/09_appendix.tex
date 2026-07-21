@@ -32,6 +32,26 @@
 \end{enumerate}
 \end{resultbox}
 
+\begin{resultbox}{算法D：风险约束训练—测试流程}
+\begin{enumerate}[leftmargin=1.8em]
+  \item 预先固定天气模型、风险预算、参数网格、训练种子和评价指标；
+  \item 对所有候选使用同一批配对天气，计算含失败总体均值和失败率；
+  \item 先过滤风险不合格候选，再在可行集中最大化不利分布总体均值；
+  \item 冻结入选参数，切换未参与选模的测试种子和更大样本；
+  \item 同时输出点估计、Wilson区间、均值区间和尾部分位数，不以测试结果回调参数。
+\end{enumerate}
+\end{resultbox}
+
+\begin{resultbox}{算法E：三人联合反馈结算}
+\begin{enumerate}[leftmargin=1.8em]
+  \item 读取共同天气和上日日末联合状态，三名玩家同步提交行动；
+  \item 按村庄分组结算行动前采购，按有向边和矿山分别建立拥挤组；
+  \item 由组人数确定移动倍数、矿山分成，逐人扣除资源并判定失败或到达；
+  \item 按村庄重新分组结算行动后采购，写入不可变逐日记录；
+  \item 截止后将失败记0，对成功者结算现金和剩余物资半价回收。
+\end{enumerate}
+\end{resultbox}
+
 \subsection{第一、二关完整逐日流水}
 
 表\ref{tab:daily-ledger}由\path{output/problem1/known_weather_exact.json}自动生成；购买栏为“水/食物”。
@@ -51,11 +71,11 @@
 \texttt{make analyze-problem2} & 第三、四关场景 & MDP敏感性和手工策略基线\\
 \texttt{make optimize-level4} & 567候选、训练/测试种子 & 第四关搜索和20000条样本外结果\\
 \texttt{make analyze-problem3} & 第五、六关多人场景 & 均衡、装载搜索、四策略比较\\
-\texttt{make figures} & 全部JSON/CSV & 9张PDF/PNG候选图\\
+\texttt{make figures} & 全部JSON/CSV & 12张黑白PDF/PNG图\\
 \texttt{make result} & 精确流水、原Result模板 & 最终\texttt{Result.xlsx}\\
 \texttt{make deliver} & 全部计算结果与论文源文件 & 最终PDF与Excel交付物\\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-随机实验的训练、测试种子和样本数均写入对应JSON；所有输出表使用UTF-8 with BOM以便Excel直接打开。最终论文引用的图只从候选目录晋级到\path{paper/figures/generated/}，避免试验图混入交付。
+随机实验的训练、测试种子和样本数均写入对应JSON；所有输出表使用UTF-8 with BOM以便Excel直接打开。最终论文引用的图由脚本白名单同步到\path{paper/figures/generated/}，其余试验图只保留在\path{output/candidate_figures/}，避免候选图混入交付。

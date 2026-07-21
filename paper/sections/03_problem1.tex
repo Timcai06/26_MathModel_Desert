@@ -2,32 +2,72 @@
 
 \subsection{时间扩展网络 MILP}
 
-对每一天 $t=1,\ldots,T$ 和有向边 $(i,j)\in E$ 定义二元变量 $x_{tij}$，表示当天由 $i$ 移动到 $j$；定义 $h_{ti}$ 表示在 $i$ 停留，$q_{ti}$ 表示在矿山 $i$ 挖矿，$y_{ti}$ 表示日末位于 $i$。每日恰执行一个行动：
-\begin{equation}
-\sum_{(i,j)\in E}x_{tij}+\sum_i h_{ti}+\sum_{i\in V_M}q_{ti}=u_{t-1},
-\label{eq:one-action}
-\end{equation}
-其中 $u_t$ 表示第 $t$ 日尚未到达终点。位置流守恒为
-\begin{equation}
-y_{tj}=h_{tj}+q_{tj}+\sum_{i:(i,j)\in E}x_{tij},\qquad
-\sum_j y_{tj}=u_t+\delta_t,
-\label{eq:location-flow}
-\end{equation}
-其中 $\delta_t=1$ 表示当天首次到达终点。沙暴日直接令全部 $x_{tij}=0$，到达矿山当日不能挖矿由前一日位置与 $q_{ti}$ 的连接约束保证。
+\subsubsection{行动弧与位置流}
 
-天气已知后，每日资源消耗是行动变量的线性组合。以水为例，
+对每个日期$t$构造合法行动弧集$\mathcal A_t$。一条弧$\alpha\in\mathcal A_t$包含起点$o(\alpha)$、终点$d(\alpha)$和行动类型$g(\alpha)\in\{\mathrm W,\mathrm S,\mathrm M,\mathrm H\}$，依次表示移动、停留、挖矿和到达后的吸收自环。沙暴日不生成移动弧，非矿山不生成挖矿弧，终点只生成零消耗吸收弧。定义
+\[
+x_{ti}=\mathbb I\{\text{第$t$日日末位于$i$}\},\qquad
+\xi_{t\alpha}=\mathbb I\{\text{第$t$日选择弧$\alpha$}\}.
+\]
+起点条件和每日流守恒为
+\begin{align}
+x_{0i}&=\mathbb I\{i=v_S\},\label{eq:milp-start}\\
+\sum_{\alpha:o(\alpha)=i}\xi_{t\alpha}&=x_{t-1,i},
+&&i\in V,\ t=1,\ldots,T,\label{eq:milp-outflow}\\
+\sum_{\alpha:d(\alpha)=j}\xi_{t\alpha}&=x_{tj},
+&&j\in V,\ t=1,\ldots,T,\label{eq:milp-inflow}\\
+x_{T,v_T}&=1.\label{eq:milp-finish}
+\end{align}
+由$\sum_i x_{0i}=1$和\cref{eq:milp-outflow,eq:milp-inflow}可归纳得到每天恰选一条行动弧；到达矿山当天的弧起点仍是上一日位置，故不可能“到达即挖矿”。吸收弧使提前到达与统一终止日$T$兼容，而且到达后不再消耗资源。
+
+\subsubsection{资源、采购与现金约束}
+
+记弧$\alpha$在第$t$日对资源$r$的消耗为
 \begin{equation}
-w_t=w_{t-1}+b^w_t-c^w_{z_t}
-\left(2\sum_{(i,j)}x_{tij}+\sum_i h_{ti}+3\sum_{i\in V_M}q_{ti}\right).
-\label{eq:milp-water}
+d_{t\alpha}^r=c_{z_t}^r
+\begin{cases}
+2,&g(\alpha)=\mathrm W,\\
+1,&g(\alpha)=\mathrm S,\\
+3,&g(\alpha)=\mathrm M,\\
+0,&g(\alpha)=\mathrm H.
+\end{cases}
+\label{eq:arc-consumption}
 \end{equation}
-食物同理。购买变量只在起点第0日或村庄开放；起点仅允许一次购买，村庄价格乘2。现金平衡写为
+初购变量为$b_0^r$，到达村庄$v$后的采购变量为$b_{tv}^r$。资源平衡、采购位置和“采购前亦不得为负”分别写成
+\begin{align}
+r_0&=b_0^r,\label{eq:initial-resource}\\
+r_t-r_{t-1}-\sum_{v\in V_V}b_{tv}^r
++\sum_{\alpha\in\mathcal A_t}d_{t\alpha}^r\xi_{t\alpha}&=0,
+\label{eq:milp-resource}\\
+0\le b_{tv}^r&\le M_r x_{tv},\label{eq:purchase-link}\\
+r_t-\sum_{v\in V_V}b_{tv}^r&\ge0.\label{eq:prepurchase-nonnegative}
+\end{align}
+其中$M_w=\lfloor C/3\rfloor$、$M_f=\lfloor C/2\rfloor$已足够，不使用任意大的常数。负重在初购与每日采购后均检查：
 \begin{equation}
-m_t=m_{t-1}+B\sum_{i\in V_M}q_{ti}
--2p_w b^w_t-2p_f b^f_t,
-\label{eq:cash}
+3w_t+2f_t\le C,\qquad t=0,\ldots,T.
+\label{eq:milp-capacity}
 \end{equation}
-起点初购单价不乘2。负重约束\cref{eq:capacity}在初购和每次补给后均检查。目标最大化\cref{eq:terminal}。由于位置、行动、购买、库存和现金全部线性，模型是混合整数线性规划；其网络流骨架与线性优化理论一致\cite{bertsimas1997}。
+设$I_{t\alpha}^{M}=1$表示弧$\alpha$为挖矿弧，则现金平衡为
+\begin{align}
+m_0+p_wb_0^w+p_fb_0^f&=M_0,\label{eq:milp-cash0}\\
+m_t-m_{t-1}+2p_w\sum_vb_{tv}^w+2p_f\sum_vb_{tv}^f
+-B\sum_{\alpha\in\mathcal A_t}I_{t\alpha}^{M}\xi_{t\alpha}&=0.
+\label{eq:milp-cash}
+\end{align}
+所有库存、采购量和现金均为非负整数，$x_{ti},\xi_{t\alpha}$为二元变量。为避免半价回收产生小数，实际求解最大化二倍终值
+\begin{equation}
+\max\ Z=2m_T+p_ww_T+p_ff_T,
+\qquad J^*=\frac{Z^*}{2}.
+\label{eq:milp-objective}
+\end{equation}
+
+\subsubsection{模型等价性与复杂度}
+
+\textbf{命题1：}满足\cref{eq:milp-start,eq:milp-objective}的任一整数解，与一条合法的逐日穿越计划一一对应。
+
+\textbf{证明要点：}由起点条件和两组流平衡，可逐日唯一恢复所选行动弧；$\mathcal A_t$的构造已排除沙暴移动、非邻接移动和非矿山挖矿。采购连接约束只允许在实际到达的村庄买入；\cref{eq:prepurchase-nonnegative}排除了用行动后采购支付行动前消耗；资源、现金和负重方程逐日守恒；终点条件保证按期到达。反之，任一合法计划把每天对应弧置1、按账本赋值库存和现金，即满足全部约束。故两者双射，目标\cref{eq:milp-objective}与题面终值完全一致。\hfill$\square$
+
+模型含$O(T|V|)$个位置变量、$O(T(|E|+|V|))$个行动变量和$O(T|V_V|)$个采购变量，约束数量同阶。其网络流骨架稀疏，只有采购、资源和现金方程把各层耦合，因此可由分支定界结合线性松弛有效求解\cite{bertsimas1997}。
 
 \subsection{求解、回放与最优性证书}
 

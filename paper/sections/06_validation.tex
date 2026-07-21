@@ -4,13 +4,54 @@
 
 计算链分为“优化/决策器”和“规则模拟器”两个入口。问题一由MILP产生行动变量，再由不参与优化的逐日模拟器检查；第三关Bellman值与1024条全序列加权回放一致；第五关均衡计划由独立的路径评价器重算资源和收益；第四、六关所有Monte Carlo样本均逐日执行同一规则内核。当前20项自动测试覆盖地图连通与对称、沙暴禁行、非矿山挖矿拒绝、起点超重拒绝、村庄行动前购买、已知天气参考流水、在线天气复现和多人同边消耗。
 
+定义约束残差$\varepsilon_g=\max\{0,g(x)\}$（对$g(x)\le0$）和$\varepsilon_h=|h(x)|$（对$h(x)=0$）。整数计划回放后，资源、现金、负重和位置的最大残差均为0；第三关独立枚举均值与Bellman值之差小于$10^{-6}$；第五关两名玩家的偏离增益均为0。验收不是只比较最终答案，而是逐层比较状态轨迹和约束残差。
+
+\begin{table}[H]
+\centering
+\caption{主要模型的数值验收准则与结果}
+\label{tab:numerical-acceptance}
+\begin{tabularx}{0.96\textwidth}{L{2.0cm}Y C{2.2cm} C{2.0cm}}
+\toprule
+对象 & 验收量 & 阈值 & 实测结果\\
+\midrule
+第一、二关MILP & 求解状态；逐日规则残差 & Optimal；0 & Optimal；0\\
+第三关MDP & Bellman值与1024序列加权均值差 & $<10^{-6}$ & $<10^{-6}$\\
+第五关均衡 & $\max_i\Delta_i$ & 0 & 0元\\
+第四、六关 & 选模样本与测试样本是否重合 & 0条 & 0条\\
+全模型 & 自动化规则测试 & 全部通过 & 20/20\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
 \subsection{训练—测试隔离与幸存者偏差}
 
-第四关训练种子为20260721，最终测试种子从20260821开始；第六关装载训练使用与最终20260921测试不同的随机流。候选选择只读取训练结果，测试输出不反向修改风险预算。设成功样本终值为 $J_j$，失败指示为 $F_j$，本文的总体估计量为
+第四关训练种子为20260721，最终测试种子从20260821开始；第六关装载训练使用与最终20260921测试不同的随机流。候选选择只读取训练结果，测试输出不反向修改风险预算。设成功样本终值为$J_j$，失败指示为$F_j$，本文的总体估计量为
 \begin{equation}
 \widehat{\mu}=\frac1N\sum_{j=1}^N (1-F_j)J_j,
 \end{equation}
 而不是只在 $F_j=0$ 的子样本上取均值。故高收益、高失败的策略不会因剔除失败局而显得虚假优越。失败率区间采用Wilson得分区间\cite{wilson1927}。
+
+\subsection{失败率与均值区间推导}
+
+设$X$次失败来自$N$个Bernoulli观测，$\widehat p=X/N$，$z=z_{0.975}=1.959964$。直接使用Wald区间$\widehat p\pm z\sqrt{\widehat p(1-\widehat p)/N}$会在$X=0$时退化为零宽区间，因此采用Wilson得分区间。其中心和半宽为
+\begin{align}
+c_W&=\frac{\widehat p+z^2/(2N)}{1+z^2/N},\label{eq:wilson-center}\\
+h_W&=\frac{z}{1+z^2/N}
+\sqrt{\frac{\widehat p(1-\widehat p)}{N}+\frac{z^2}{4N^2}},
+\label{eq:wilson-halfwidth}
+\end{align}
+故区间为$[\max(0,c_W-h_W),\min(1,c_W+h_W)]$。例如第四关低沙暴样本$X=0,N=20000$，仍得到非零上界0.0192\%；这比宣称“风险为0”更审慎。
+
+对失败记0后的终值$Y_1,\ldots,Y_N$，记样本均值$\bar Y$、样本标准差$s_Y$，大样本95\%区间为
+\begin{equation}
+\bar Y\pm z\frac{s_Y}{\sqrt N}.
+\label{eq:mean-confidence-interval}
+\end{equation}
+第六关同时输出玩家级与局级失败区间：前者回答“随机玩家失败概率”，后者回答“至少一名玩家失败的局概率”。两种分母和问题不同，不能混用。
+
+\subsection{参数敏感性与安全裕度}
+
+附录\cref{fig:oos-risk-intervals}把第四、六关入选策略的点估计、Wilson区间与预设预算放在同一图中；不利天气下上置信界仍分别低于0.5\%。\cref{fig:loading-robustness}显示，第六关装载从180增至220箱时，失败率单调下降而终值近似线性下降。185/185是同时通过两档风险预算的最小训练装载，继续增加资源主要换取未被约束要求的安全冗余，因此不是当前目标下的最优折中。
 
 \subsection{消融：为什么不能复制单人策略}
 

@@ -22,14 +22,15 @@
 \usepackage[nameinlink,noabbrev]{cleveref}
 \usetikzlibrary{arrows.meta,positioning,calc}
 
-\definecolor{DesertNavy}{HTML}{17324D}
-\definecolor{OasisTeal}{HTML}{168C8C}
-\definecolor{SandGold}{HTML}{D6A64A}
-\definecolor{RiskRed}{HTML}{C45A3C}
-\definecolor{WarmSand}{HTML}{F6F0E6}
-\definecolor{Ink}{HTML}{1B1F23}
-\definecolor{QuietGray}{HTML}{6F7B85}
-\definecolor{RuleGray}{HTML}{D9E0E5}
+% 严格黑白印刷体系：信息层级仅由明度、线宽、线型与纹理表达。
+\definecolor{DesertNavy}{HTML}{111111}
+\definecolor{OasisTeal}{HTML}{3F3F3F}
+\definecolor{SandGold}{HTML}{707070}
+\definecolor{RiskRed}{HTML}{222222}
+\definecolor{WarmSand}{HTML}{F2F2F2}
+\definecolor{Ink}{HTML}{111111}
+\definecolor{QuietGray}{HTML}{606060}
+\definecolor{RuleGray}{HTML}{C8C8C8}
 
 \graphicspath{{figures/generated/}}
 \hypersetup{hidelinks,pdftitle={基于时空网络、随机动态规划与拥挤博弈的穿越沙漠策略研究},pdfauthor={}}
@@ -40,14 +41,14 @@
 \fancyhead[R]{\small\color{QuietGray}\nouppercase{\leftmark}}
 \fancyfoot[C]{\thepage}
 \renewcommand{\headrulewidth}{0.35pt}
-\renewcommand{\headrule}{\hbox to\headwidth{\color{SandGold}\leaders\hrule height \headrulewidth\hfill}}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{DesertNavy}\leaders\hrule height \headrulewidth\hfill}}
 
 \ctexset{
   section={name={,},number=\arabic{section},format=\Large\sffamily\bfseries\color{DesertNavy},beforeskip=1.4ex,afterskip=0.85ex},
   subsection={format=\large\sffamily\bfseries\color{DesertNavy},beforeskip=1.1ex,afterskip=0.55ex},
-  subsubsection={format=\normalsize\sffamily\bfseries\color{OasisTeal},beforeskip=0.9ex,afterskip=0.4ex}
+  subsubsection={format=\normalsize\sffamily\bfseries\color{DesertNavy},beforeskip=0.9ex,afterskip=0.4ex}
 }
-\titleformat{\section}{\Large\sffamily\bfseries\color{DesertNavy}}{\thesection}{0.65em}{}[\vspace{0.2ex}{\color{SandGold}\titlerule[0.8pt]}]
+\titleformat{\section}{\Large\sffamily\bfseries\color{DesertNavy}}{\thesection}{0.65em}{}[\vspace{0.2ex}{\color{DesertNavy}\titlerule[0.8pt]}]
 \titlespacing*{\section}{0pt}{1.35em}{0.75em}
 \pretocmd{\section}{\Needspace{8\baselineskip}}{}{}
 \linespread{1.31}
@@ -77,27 +78,31 @@
 \setlength{\emergencystretch}{2em}
 
 \newtcolorbox{resultbox}[1]{
-  enhanced,breakable,colback=WarmSand!52,colframe=SandGold!80!black,
+  enhanced,breakable,colback=WarmSand,colframe=DesertNavy,
   boxrule=0.45pt,leftrule=2.2pt,arc=1.5pt,left=7pt,right=7pt,top=5pt,bottom=5pt,
   title={#1},fonttitle=\small\sffamily\bfseries,coltitle=DesertNavy,
-  colbacktitle=WarmSand!75,attach boxed title to top left={xshift=0pt,yshift=-1pt},
+  colbacktitle=WarmSand,attach boxed title to top left={xshift=0pt,yshift=-1pt},
   boxed title style={boxrule=0pt,arc=1pt},before skip=0.8em,after skip=0.8em,
   fontupper=\small
 }
 \newtcolorbox{boundarybox}{
-  enhanced,breakable,colback=white,colframe=RiskRed!75,boxrule=0.4pt,
+  enhanced,breakable,colback=white,colframe=DesertNavy,boxrule=0.4pt,
   leftrule=2pt,arc=1pt,left=7pt,right=7pt,top=5pt,bottom=5pt,
   before skip=0.75em,after skip=0.75em,fontupper=\small
 }
-\newcommand{\evidence}[1]{\textcolor{OasisTeal}{\sffamily\bfseries[#1]}}
+\newcommand{\evidence}[1]{\textcolor{DesertNavy}{\sffamily\bfseries[#1]}}
 \newcommand{\R}{\mathbb{R}}
 \crefname{figure}{图}{图}
 \crefname{table}{表}{表}
 \crefname{equation}{式}{式}
+\providecommand{\crefpairconjunction}{和}
+\providecommand{\crefmiddleconjunction}{、}
+\providecommand{\creflastconjunction}{和}
 
 \lstset{
   basicstyle=\ttfamily\scriptsize,keywordstyle=\bfseries\color{DesertNavy},
   commentstyle=\color{QuietGray},stringstyle=\color{OasisTeal},numbers=left,
   numberstyle=\tiny\color{QuietGray},frame=single,rulecolor=\color{RuleGray},
-  breaklines=true,showstringspaces=false,columns=fullflexible,backgroundcolor=\color{WarmSand!25}
+  breaklines=true,breakatwhitespace=false,showstringspaces=false,
+  columns=fullflexible,backgroundcolor=\color{WarmSand!25}
 }

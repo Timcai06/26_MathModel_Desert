@@ -14,6 +14,25 @@
 1,&a^i_t=\text{停留}.
 \end{cases}
 \end{equation}
+记$k_{t,m}$为同矿挖矿人数，$k_{t,v}^{B}$为同村同日购买人数。玩家$i$的资源和现金转移可统一写成
+\begin{align}
+r_t^i&=r_{t-1}^i+b_t^{r,i,-}+b_t^{r,i,+}
+-\lambda_t^ic_{z_t}^r,\qquad r\in\{w,f\},
+\label{eq:multi-resource}\\
+m_t^i&=m_{t-1}^i+\frac{B}{k_{t,m}}I_{t,i}^{M}
+-\rho(k_{t,v}^{B})\sum_{r}p_rb_t^{r,i},
+\label{eq:multi-cash}\\
+\rho(k)&=
+\begin{cases}4,&k\ge2,\\2,&k=1.\end{cases}
+\label{eq:village-congestion}
+\end{align}
+其中无挖矿时令$I_{t,i}^{M}=0$。联合状态$\bm S_t=(S_t^1,\ldots,S_t^n)$不再能按玩家独立转移，因为$\lambda_t^i$、矿山收益和采购价格都由联合行动决定。令$\bm\Phi$为“先分组、再结算”的联合映射，则
+\begin{equation}
+\bm S_t=\bm\Phi(\bm S_{t-1},z_t,\bm a_t,\bm b_t),
+\label{eq:joint-transition}
+\end{equation}
+这也是多人模拟器逐日执行的数学定义。
+
 这使玩家收益 $J_i(\pi_i,\pi_{-i})$ 显式依赖其他玩家策略。Nash均衡要求
 \begin{equation}
 J_i(\pi_i^*,\pi_{-i}^*)\ge J_i(\pi_i,\pi_{-i}^*),\quad
@@ -28,9 +47,37 @@ J_i(\pi_i^*,\pi_{-i}^*)\ge J_i(\pi_i,\pi_{-i}^*),\quad
 \[
 (t,l_t,W_t,F_t),
 \]
-其中 $W_t,F_t$ 是截至第 $t$ 日累计需要购买的资源。对每一状态枚举停留、相邻移动和矿山挖矿；若与对手同边，则当天新增消耗按4倍计；若同矿，则挖矿收入由200降为100元。相同状态只保留挖矿收入最大的标签，并用到终点最短距离剪去已无法按时到达的状态。
+其中$W_t,F_t$是截至第$t$日累计需要购买的资源。给定对手第$t$日的位置—行动$(l_t^{-i},a_t^{-i})$，自身行动$a$产生确定增量
+\begin{equation}
+(\Delta W_t,\Delta F_t,\Delta R_t)
+=g_t(l,a;l_t^{-i},a_t^{-i},z_t),
+\label{eq:best-response-increment}
+\end{equation}
+其中同向边把移动倍数由2改为4，同矿把收入由200元改为100元。定义$D_t(l,W,F)$为到达该标签时可得的最大累计矿山收入，则标签递推为
+\begin{equation}
+D_t(l',W',F')=max_{a\in\mathcal A_t(l)}
+\left\{D_{t-1}(l,W,F)+\Delta R_t(a)\right\},
+\label{eq:best-response-dp}
+\end{equation}
+其中$l'=L(l,a)$、$W'=W+\Delta W_t$、$F'=F+\Delta F_t$。只保留满足
+\begin{equation}
+3W'+2F'\le C,\qquad p_wW'+p_fF'\le M_0,\qquad
+d(l',v_T)\le T-t
+\label{eq:best-response-pruning}
+\end{equation}
+的标签。相同$(l',W',F')$只保留$D_t$最大的路径，因为它对未来可行域无影响而终值更高。终点标签的价值为
+\begin{equation}
+J_i=M_0-p_wW_\tau-p_fF_\tau+D_\tau(v_T,W_\tau,F_\tau).
+\label{eq:best-response-terminal}
+\end{equation}
+由有限日期、有限节点和整数容量可知标签集有限，故\cref{eq:best-response-dp}枚举了固定对手下的完整策略空间，而不是局部换路启发式。
 
-从单人最优计划出发交替计算最佳响应，在30轮上限内收敛；随后固定对手，对双方各再做一次完整最佳响应。结果见\cref{tab:level5-eq}。
+从单人最优计划出发交替计算最佳响应，在30轮上限内收敛；随后固定对手，对双方各再做一次完整最佳响应。定义偏离增益
+\begin{equation}
+\Delta_i=\max_{\pi_i}J_i(\pi_i,\pi_{-i}^*)-J_i(\pi_i^*,\pi_{-i}^*).
+\label{eq:deviation-gain}
+\end{equation}
+只有当$\Delta_1=\Delta_2=0$时才接受纯策略Nash均衡。结果见\cref{tab:level5-eq}。
 
 \begin{table}[H]
 \centering
@@ -57,7 +104,13 @@ J_i(\pi_i^*,\pi_{-i}^*)\ge J_i(\pi_i,\pi_{-i}^*),\quad
 
 \subsection{第六关：三人联合反馈模拟}
 
-第六关每天先揭示天气，再由三名玩家根据上一日公开的联合状态选择行动。联合模拟器逐日完成：行动前村庄购买分组、同向边分组、同矿分组、资源扣除、收益分摊、行动后购买、失败和终点结算。四种策略用于机制消融：
+第六关每天先揭示天气，再由三名玩家根据上一日公开的联合状态选择行动。联合反馈策略是映射
+\begin{equation}
+\bm\pi_t:\ (\bm S_0,z_1,\bm a_1,\ldots,\bm S_{t-1},z_t)
+\longmapsto \bm a_t,
+\label{eq:joint-policy}
+\end{equation}
+其后由\cref{eq:joint-transition}一次性结算。模拟器严格按行动前村庄购买分组、同向边分组、同矿分组、资源扣除、收益分摊、行动后购买、失败和终点结算的顺序执行。为分离不同外部性，比较四种策略：
 
 \begin{enumerate}
   \item \textbf{镜像挖矿：}三人复制单人矿山阈值策略；
@@ -66,7 +119,16 @@ J_i(\pi_i^*,\pi_{-i}^*)\ge J_i(\pi_i,\pi_{-i}^*),\quad
   \item \textbf{合作轮换：}先分路到矿山，每天最多安排一人挖矿，作为可协调对照。
 \end{enumerate}
 
-分路直达的初始水食从180到220箱、步长5搜索，共9个候选。训练阶段基准和不利分布各3000条天气，风险预算分别为玩家失败率不超过0.2\%和0.5\%；入选每人185箱水、185箱食物。测试阶段换用种子20260921起的20000条天气/分布，即每种分布60000个玩家观测。
+分路直达的初始水食从180到220箱、步长5搜索，共9个候选。设装载参数$q$表示每人初始水、食物均为$q$箱，训练选择为
+\begin{equation}
+q^*=\arg\max_{q\in\{180,185,\ldots,220\}}
+\widehat\mu_{\mathrm{adv}}(q)
+\quad\text{s.t.}\quad
+\widehat p_{\mathrm{base}}(q)\le0.002,
+\ \widehat p_{\mathrm{adv}}(q)\le0.005.
+\label{eq:level6-load-selection}
+\end{equation}
+训练阶段基准和不利分布各3000局；入选$q^*=185$。测试阶段换用种子20260921，每种分布20000局，即60000个玩家观测。因为同一局三人的失败相关，玩家级区间用于描述个体风险，同时另行计算局级区间，避免把60000个观测误当作完全独立的局。
 
 \begin{figure}[H]
   \centering
@@ -103,7 +165,14 @@ J_i(\pi_i^*,\pi_{-i}^*)\ge J_i(\pi_i,\pi_{-i}^*),\quad
   \label{fig:level6-mechanism}
 \end{figure}
 
-固定角色下，第三名玩家因错峰在基准分布平均少59.4元。第0天用公开随机数将三名玩家均匀分配到三种角色，则每名玩家的事前期望都等于三种角色均值，既不改变路线外部性，也消除身份固定造成的事前不公平。
+固定角色下，第三名玩家因错峰在基准分布平均少59.4元。设三个路线角色的期望终值为$\mu_1,\mu_2,\mu_3$，第0天生成与身份无关的均匀随机置换$\sigma$，把玩家$i$分配到角色$\sigma(i)$。则对任意玩家$i$，
+\begin{equation}
+\mathbb E[J_i]
+=\sum_{r=1}^3\Pr\{\sigma(i)=r\}\mu_r
+=\frac13(\mu_1+\mu_2+\mu_3)=\overline\mu.
+\label{eq:exante-fairness}
+\end{equation}
+所以随机置换不改变三条路线的联合占用和系统总收益，却使每名玩家获得相同的事前期望。固定角色的事后收益仍可能不同，这里主张的是事前公平而非逐局完全相等。
 
 \begin{resultbox}{问题三结论}
 第五关的9535/9510元组合通过完整最佳响应检验，属于精确纯策略均衡\evidence{E3}。第六关推荐185/185箱的分路直达反馈策略，属于风险预算内的独立样本外推荐\evidence{E4}，不宣称已经求得整个随机动态博弈的Markov完美均衡。

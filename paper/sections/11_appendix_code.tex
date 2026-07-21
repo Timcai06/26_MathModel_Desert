@@ -1,0 +1,52 @@
+\section{核心建模代码摘录}
+
+本节代码均由论文随附仓库直接读取，不是为排版另写的伪代码。为控制篇幅，只保留能够对应正文方程的核心区段；完整程序、测试和场景数据随项目一并交付。
+
+\subsection{时间扩展网络MILP的行动弧与流守恒}
+
+代码\ref{code:milp}对应\cref{eq:milp-start,eq:milp-inflow}：按天气生成行动弧，沙暴日不生成移动变量，并以两组流约束连接相邻时间层。
+
+\lstinputlisting[language=Python,firstline=37,lastline=100,caption={确定天气MILP的行动弧与位置流构造},label={code:milp}]{../src/desert/optimizer.py}
+
+\subsection{天气揭示前后的Bellman递推}
+
+代码\ref{code:mdp}对应\cref{eq:post-weather-bellman,eq:pre-weather-bellman}。任何正概率天气下没有可行后继，状态值即为负无穷，从实现层保证支撑集稳健可行。
+
+\lstinputlisting[language=Python,firstline=81,lastline=124,caption={第三关有限时域MDP的精确递推},label={code:mdp}]{../src/desert/level3_mdp.py}
+
+\subsection{完整最佳响应动态规划}
+
+代码\ref{code:best-response}对应\cref{eq:best-response-dp,eq:best-response-pruning}。状态标签同时受负重、资金和最短剩余距离剪枝，相同状态只保留更高矿山收入。
+
+\lstinputlisting[language=Python,firstline=125,lastline=193,caption={第五关固定对手下的完整最佳响应搜索},label={code:best-response}]{../src/desert/level5_game.py}
+
+\subsection{多人联合分组与逐日结算}
+
+代码\ref{code:joint-simulator}先按同向有向边和同矿建立分组，再由组大小计算消耗倍数和收益分成，对应\cref{eq:multi-resource,eq:multi-cash,eq:joint-transition}。
+
+\lstinputlisting[language=Python,firstline=119,lastline=180,caption={第六关多人拥挤分组、资源扣除与终值结算},label={code:joint-simulator}]{../src/desert/multiplayer.py}
+
+\subsection{Wilson失败率区间}
+
+代码\ref{code:wilson}直接实现\cref{eq:wilson-center,eq:wilson-halfwidth}，并用于第四、六关所有样本外失败率区间。
+
+\lstinputlisting[language=Python,firstline=34,lastline=52,caption={Wilson得分区间的数值实现},label={code:wilson}]{../src/desert/evaluation.py}
+
+\subsection{代码—公式—输出追踪关系}
+
+\begin{table}[H]
+\centering
+\caption{建模证据的三向追踪}
+\begin{tabularx}{0.96\textwidth}{L{2.8cm}L{3.3cm}Y}
+\toprule
+数学对象 & 实现入口 & 主要审计输出\\
+\midrule
+时空网络MILP & \path{optimizer.py} & 求解状态、目标值、逐日位置和资源账本\\
+有限时域MDP & \path{level3_mdp.py} & 状态数、初购、Bellman值、全序列误差\\
+风险阈值策略 & \path{level4_policies.py} & 候选前沿、失败率、Wilson区间\\
+最佳响应博弈 & \path{level5_game.py} & 均衡路径、两方偏离增益\\
+多人联合转移 & \path{multiplayer.py} & 共享边/矿山玩家日、角色均值、失败率\\
+统计评估 & \path{evaluation.py} & 均值、分位数、均值区间、Wilson区间\\
+\bottomrule
+\end{tabularx}
+\end{table}
