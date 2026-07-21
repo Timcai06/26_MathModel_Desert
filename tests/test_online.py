@@ -1,7 +1,9 @@
 import random
 import unittest
 
+from desert.evaluation import evaluate_weather_sequences
 from desert.level4_policies import DirectRobustPolicy, shortest_distance
+from desert.level4_search import candidate_grid
 from desert.model import Weather
 from desert.online import simulate_policy
 from desert.scenarios import get_scenario
@@ -28,6 +30,23 @@ class OnlineTests(unittest.TestCase):
         self.assertEqual(shortest_distance(scenario, 1, 25), 8)
         self.assertEqual(shortest_distance(scenario, 1, 18), 5)
         self.assertEqual(shortest_distance(scenario, 18, 25), 3)
+
+    def test_level4_candidate_grid_respects_capacity(self) -> None:
+        scenario = get_scenario(4)
+        candidates = list(candidate_grid(scenario))
+        self.assertGreater(len(candidates), 100)
+        for candidate in candidates:
+            self.assertLessEqual(3 * candidate.initial_water + 2 * candidate.initial_food, 1200)
+
+    def test_failure_is_included_in_penalized_value(self) -> None:
+        scenario = get_scenario(4)
+        summary = evaluate_weather_sequences(
+            scenario,
+            DirectRobustPolicy(0),
+            [(Weather.SANDSTORM,) * scenario.deadline],
+        )
+        self.assertEqual(summary.failure_rate, 1)
+        self.assertEqual(summary.mean_penalized_value, 0)
 
 
 if __name__ == "__main__":

@@ -1,8 +1,9 @@
 PYTHON ?= python3
+LATEXMK ?= latexmk
 VENV_PYTHON := .venv/bin/python
 PYTHONPATH_VALUE := src
 
-.PHONY: setup test solve-known analyze-problem2 result verify all
+.PHONY: setup test solve-known analyze-problem2 optimize-level4 analyze-problem3 figures paper-assets paper result verify deliver all
 
 setup:
 	$(PYTHON) -m venv .venv
@@ -19,13 +20,33 @@ solve-known:
 analyze-problem2:
 	PYTHONPATH=$(PYTHONPATH_VALUE) $(PYTHON) scripts/analyze_problem2.py
 
+optimize-level4:
+	PYTHONPATH=$(PYTHONPATH_VALUE) $(PYTHON) scripts/optimize_level4.py
+
+analyze-problem3:
+	PYTHONPATH=$(PYTHONPATH_VALUE) $(PYTHON) scripts/analyze_problem3.py
+
+figures:
+	PYTHONPATH=$(PYTHONPATH_VALUE) $(VENV_PYTHON) scripts/generate_figures.py
+
+paper-assets: figures
+	PYTHONPATH=$(PYTHONPATH_VALUE) $(PYTHON) scripts/generate_paper_tables.py
+
+paper: paper-assets
+	cd paper && $(LATEXMK) -norc -xelatex -interaction=nonstopmode -halt-on-error -outdir=build main.tex
+
 result:
 	PYTHONPATH=$(PYTHONPATH_VALUE) $(PYTHON) scripts/fill_result.py \
 		B题/Result.xlsx \
 		output/problem1/known_weather_exact.json \
 		output/final/Result.xlsx
 
-verify: test
+verify: test result
 	unzip -t output/final/Result.xlsx
 
-all: test solve-known analyze-problem2 result verify
+deliver: paper result
+	mkdir -p output/final output/pdf
+	cp paper/build/main.pdf "output/final/穿越沙漠策略研究_完整稿.pdf"
+	cp paper/build/main.pdf "output/pdf/穿越沙漠策略研究_完整稿.pdf"
+
+all: solve-known analyze-problem2 optimize-level4 analyze-problem3 verify deliver

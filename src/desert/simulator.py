@@ -46,6 +46,86 @@ def _validate_purchase_quantities(water: int, food: int) -> None:
         raise SimulationError("水和食物必须按非负整数箱购买")
 
 
+def advance_day(
+    scenario: Scenario,
+    current: DailyRecord,
+    decision: DayDecision,
+    today: Weather,
+) -> DailyRecord:
+    """从一个合法日末状态推进一天，并执行全部题面约束检查。"""
+    day = current.day + 1
+    if day > scenario.deadline:
+        raise SimulationError("策略超过截止日期")
+    if current.location == scenario.destination:
+        raise SimulationError("到达终点后不能继续行动")
+    _validate_purchase_quantities(decision.buy_water, decision.buy_food)
+    _validate_purchase_quantities(decision.buy_before_water, decision.buy_before_food)
+
+    cash = current.cash
+    water = current.water
+    food = current.food
+    location = current.location
+
+    if decision.buy_before_water or decision.buy_before_food:
+        if location not in scenario.villages:
+            raise SimulationError(f"第 {day} 日行动前不在村庄，不能补给")
+        cash -= _purchase_cost(
+            scenario, decision.buy_before_water, decision.buy_before_food, multiplier=2
+        )
+        water += decision.buy_before_water
+        food += decision.buy_before_food
+        if cash < 0:
+            raise SimulationError(f"第 {day} 日行动前采购超过可用资金")
+        if _load(scenario, water, food) > scenario.capacity:
+            raise SimulationError(f"第 {day} 日行动前采购后超过负重上限")
+
+    if decision.action is Action.WALK:
+        if today is Weather.SANDSTORM:
+            raise SimulationError(f"第 {day} 日沙暴天气不能行走")
+        if decision.destination is None or decision.destination not in scenario.graph[location]:
+            raise SimulationError(f"第 {day} 日移动目的地与区域 {location} 不相邻")
+        location = decision.destination
+        consumption_factor = 2
+    elif decision.action is Action.STAY:
+        if decision.destination is not None:
+            raise SimulationError(f"第 {day} 日停留时不应填写移动目的地")
+        consumption_factor = 1
+    elif decision.action is Action.MINE:
+        if decision.destination is not None:
+            raise SimulationError(f"第 {day} 日挖矿时不应填写移动目的地")
+        if location not in scenario.mines:
+            raise SimulationError(f"第 {day} 日所在区域 {location} 不是矿山")
+        consumption_factor = 3
+        cash += scenario.mine_income
+    else:
+        raise SimulationError(f"第 {day} 日行动类型无效")
+
+    water -= scenario.water.consumption[today] * consumption_factor
+    food -= scenario.food.consumption[today] * consumption_factor
+    if water < 0 or food < 0:
+        raise SimulationError(f"第 {day} 日行动途中物资不足")
+
+    if decision.buy_water or decision.buy_food:
+        if location not in scenario.villages:
+            raise SimulationError(f"第 {day} 日不在村庄，不能补给")
+        cash -= _purchase_cost(scenario, decision.buy_water, decision.buy_food, multiplier=2)
+        water += decision.buy_water
+        food += decision.buy_food
+        if cash < 0:
+            raise SimulationError(f"第 {day} 日村庄采购超过可用资金")
+        if _load(scenario, water, food) > scenario.capacity:
+            raise SimulationError(f"第 {day} 日村庄采购后超过负重上限")
+
+    if location != scenario.destination and (water <= 0 or food <= 0):
+        raise SimulationError(f"第 {day} 日结束时物资耗尽且尚未到达终点")
+
+    return DailyRecord(
+        day, location, cash, water, food, today, decision.action,
+        decision.buy_water, decision.buy_food,
+        decision.buy_before_water, decision.buy_before_food,
+    )
+
+
 def simulate(
     scenario: Scenario,
     plan: Plan,
@@ -79,76 +159,9 @@ def simulate(
     arrival_day: int | None = None
 
     for day, decision in enumerate(plan.decisions, start=1):
-        if day > scenario.deadline:
-            raise SimulationError("策略超过截止日期")
-        if arrival_day is not None:
-            raise SimulationError("到达终点后不能继续行动")
-        _validate_purchase_quantities(decision.buy_water, decision.buy_food)
-        _validate_purchase_quantities(decision.buy_before_water, decision.buy_before_food)
-        today = actual_weather[day - 1]
-
-        if decision.buy_before_water or decision.buy_before_food:
-            if location not in scenario.villages:
-                raise SimulationError(f"第 {day} 日行动前不在村庄，不能补给")
-            cash -= _purchase_cost(
-                scenario, decision.buy_before_water, decision.buy_before_food, multiplier=2
-            )
-            water += decision.buy_before_water
-            food += decision.buy_before_food
-            if cash < 0:
-                raise SimulationError(f"第 {day} 日行动前采购超过可用资金")
-            if _load(scenario, water, food) > scenario.capacity:
-                raise SimulationError(f"第 {day} 日行动前采购后超过负重上限")
-
-        if decision.action is Action.WALK:
-            if today is Weather.SANDSTORM:
-                raise SimulationError(f"第 {day} 日沙暴天气不能行走")
-            if decision.destination is None or decision.destination not in scenario.graph[location]:
-                raise SimulationError(f"第 {day} 日移动目的地与区域 {location} 不相邻")
-            location = decision.destination
-            consumption_factor = 2
-        elif decision.action is Action.STAY:
-            if decision.destination is not None:
-                raise SimulationError(f"第 {day} 日停留时不应填写移动目的地")
-            consumption_factor = 1
-        elif decision.action is Action.MINE:
-            if decision.destination is not None:
-                raise SimulationError(f"第 {day} 日挖矿时不应填写移动目的地")
-            if location not in scenario.mines:
-                raise SimulationError(f"第 {day} 日所在区域 {location} 不是矿山")
-            consumption_factor = 3
-            cash += scenario.mine_income
-        else:
-            raise SimulationError(f"第 {day} 日行动类型无效")
-
-        water -= scenario.water.consumption[today] * consumption_factor
-        food -= scenario.food.consumption[today] * consumption_factor
-        if water < 0 or food < 0:
-            raise SimulationError(f"第 {day} 日行动途中物资不足")
-
-        if decision.buy_water or decision.buy_food:
-            if location not in scenario.villages:
-                raise SimulationError(f"第 {day} 日不在村庄，不能补给")
-            cash -= _purchase_cost(
-                scenario, decision.buy_water, decision.buy_food, multiplier=2
-            )
-            water += decision.buy_water
-            food += decision.buy_food
-            if cash < 0:
-                raise SimulationError(f"第 {day} 日村庄采购超过可用资金")
-            if _load(scenario, water, food) > scenario.capacity:
-                raise SimulationError(f"第 {day} 日村庄采购后超过负重上限")
-
-        if location != scenario.destination and (water <= 0 or food <= 0):
-            raise SimulationError(f"第 {day} 日结束时物资耗尽且尚未到达终点")
-
-        records.append(
-            DailyRecord(
-                day, location, cash, water, food, today, decision.action,
-                decision.buy_water, decision.buy_food,
-                decision.buy_before_water, decision.buy_before_food,
-            )
-        )
+        record = advance_day(scenario, records[-1], decision, actual_weather[day - 1])
+        records.append(record)
+        location, cash, water, food = record.location, record.cash, record.water, record.food
         if location == scenario.destination:
             arrival_day = day
 

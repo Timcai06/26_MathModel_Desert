@@ -78,7 +78,13 @@
       "p05_value": 7625.0,
       "minimum_value": 7390.0,
       "maximum_value": 8180.0,
-      "mean_arrival_day": 8.4204
+      "mean_arrival_day": 8.4204,
+      "mean_penalized_value": 7846.294,
+      "penalized_p05_value": 7625.0,
+      "failure_wilson_low": 0.0,
+      "failure_wilson_high": 0.0007677019450571244,
+      "mean_penalized_ci_low": 7842.903003378879,
+      "mean_penalized_ci_high": 7849.684996621121
     },
     {
       "weather_model": "低沙暴",
@@ -97,7 +103,13 @@
       "p05_value": 9035.0,
       "minimum_value": 8645.0,
       "maximum_value": 15020.0,
-      "mean_arrival_day": 12.3288
+      "mean_arrival_day": 12.3288,
+      "mean_penalized_value": 10773.7855,
+      "penalized_p05_value": 9035.0,
+      "failure_wilson_low": 0.0,
+      "failure_wilson_high": 0.0007677019450571244,
+      "mean_penalized_ci_low": 10746.013144326964,
+      "mean_penalized_ci_high": 10801.557855673036
     },
     {
       "weather_model": "低沙暴",
@@ -116,7 +128,13 @@
       "p05_value": 8800.0,
       "minimum_value": 7842.5,
       "maximum_value": 13185.0,
-      "mean_arrival_day": 11.342
+      "mean_arrival_day": 11.342,
+      "mean_penalized_value": 9925.791,
+      "penalized_p05_value": 8800.0,
+      "failure_wilson_low": 0.0,
+      "failure_wilson_high": 0.0007677019450571244,
+      "mean_penalized_ci_low": 9899.866366458808,
+      "mean_penalized_ci_high": 9951.715633541191
     },
     {
       "weather_model": "基准",
@@ -135,7 +153,13 @@
       "p05_value": 7555.0,
       "minimum_value": 7240.0,
       "maximum_value": 8180.0,
-      "mean_arrival_day": 8.906
+      "mean_arrival_day": 8.906,
+      "mean_penalized_value": 7794.274,
+      "penalized_p05_value": 7555.0,
+      "failure_wilson_low": 0.0,
+      "failure_wilson_high": 0.0007677019450571244,
+      "mean_penalized_ci_low": 7790.536987196706,
+      "mean_penalized_ci_high": 7798.011012803295
     },
     {
       "weather_model": "基准",
@@ -154,7 +178,13 @@
       "p05_value": 8915.0,
       "minimum_value": 8477.5,
       "maximum_value": 14865.0,
-      "mean_arrival_day": 12.662595114136964
+      "mean_arrival_day": 12.662595114136964,
+      "mean_penalized_value": 10571.271,
+      "penalized_p05_value": 8880.0,
+      "failure_wilson_low": 0.0005500831677591556,
+      "failure_wilson_high": 0.002615776292629832,
+      "mean_penalized_ci_low": 10542.687935946567,
+      "mean_penalized_ci_high": 10599.854064053434
     },
     {
       "weather_model": "基准",
@@ -173,7 +203,13 @@
       "p05_value": 8082.5,
       "minimum_value": 7617.5,
       "maximum_value": 13185.0,
-      "mean_arrival_day": 11.6914
+      "mean_arrival_day": 11.6914,
+      "mean_penalized_value": 9746.124,
+      "penalized_p05_value": 8082.5,
+      "failure_wilson_low": 0.0,
+      "failure_wilson_high": 0.0007677019450571244,
+      "mean_penalized_ci_low": 9720.883079109633,
+      "mean_penalized_ci_high": 9771.364920890366
     },
     {
       "weather_model": "不利",
@@ -192,7 +228,13 @@
       "p05_value": 7470.0,
       "minimum_value": 7240.0,
       "maximum_value": 8105.0,
-      "mean_arrival_day": 9.412860576923077
+      "mean_arrival_day": 9.412860576923077,
+      "mean_penalized_value": 7686.157,
+      "penalized_p05_value": 7470.0,
+      "failure_wilson_low": 0.0008109751397282834,
+      "failure_wilson_high": 0.0031542701591046594,
+      "mean_penalized_ci_low": 7676.721198155248,
+      "mean_penalized_ci_high": 7695.592801844752
     },
     {
       "weather_model": "不利",
@@ -211,7 +253,13 @@
       "p05_value": 8720.0,
       "minimum_value": 7542.5,
       "maximum_value": 13867.5,
-      "mean_arrival_day": 12.697012515139281
+      "mean_arrival_day": 12.697012515139281,
+      "mean_penalized_value": 9970.988,
+      "penalized_p05_value": 8697.5,
+      "failure_wilson_low": 0.0069047385482477065,
+      "failure_wilson_high": 0.012248837681020369,
+      "mean_penalized_ci_low": 9935.186684649476,
+      "mean_penalized_ci_high": 10006.789315350523
     },
     {
       "weather_model": "不利",
@@ -230,7 +278,13 @@
       "p05_value": 7922.5,
       "minimum_value": 7525.0,
       "maximum_value": 12107.5,
-      "mean_arrival_day": 11.805405405405406
+      "mean_arrival_day": 11.805405405405406,
+      "mean_penalized_value": 9253.783,
+      "penalized_p05_value": 7922.5,
+      "failure_wilson_low": 0.00042721349110879964,
+      "failure_wilson_high": 0.002338953050058211,
+      "mean_penalized_ci_low": 9228.947043135564,
+      "mean_penalized_ci_high": 9278.618956864435
     }
   ]
 }

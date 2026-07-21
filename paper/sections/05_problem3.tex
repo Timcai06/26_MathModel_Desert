@@ -1,0 +1,110 @@
+\section{问题三：多人拥挤博弈与在线反馈}
+
+\subsection{多人规则的精确恢复}
+
+原题中的多人系数以旧版 Word 的 WMF 公式保存，普通文本抽取会遗漏。通过原始页面渲染核实：同一天同一有向边上有 $k\ge2$ 人时，每人移动消耗系数由2变为 $2k$；同矿 $k$ 人的消耗系数仍为3，每人收入为 $B/k$；同村至少两人购买时，单价由基准价2倍升为4倍。第五关 $n=2$，第六关 $n=3$。
+
+对玩家 $i$，给定联合行动 $\bm a_t$，移动消耗倍数为
+\begin{equation}
+\lambda^i_t=
+\begin{cases}
+2k_{t,e},&a^i_t=\text{沿有向边 }e\text{ 移动},\ k_{t,e}\ge2,\\
+2,&a^i_t=\text{移动且 }k_{t,e}=1,\\
+3,&a^i_t=\text{挖矿},\\
+1,&a^i_t=\text{停留}.
+\end{cases}
+\end{equation}
+这使玩家收益 $J_i(\pi_i,\pi_{-i})$ 显式依赖其他玩家策略。Nash均衡要求
+\begin{equation}
+J_i(\pi_i^*,\pi_{-i}^*)\ge J_i(\pi_i,\pi_{-i}^*),\quad
+\forall i,\ \forall\pi_i,
+\label{eq:nash}
+\end{equation}
+与非合作博弈的经典定义一致\cite{nash1951}。
+
+\subsection{第五关：完整最佳响应动态规划}
+
+天气和对手计划固定时，自身最优响应仍可用动态规划求解。状态为
+\[
+(t,l_t,W_t,F_t),
+\]
+其中 $W_t,F_t$ 是截至第 $t$ 日累计需要购买的资源。对每一状态枚举停留、相邻移动和矿山挖矿；若与对手同边，则当天新增消耗按4倍计；若同矿，则挖矿收入由200降为100元。相同状态只保留挖矿收入最大的标签，并用到终点最短距离剪去已无法按时到达的状态。
+
+从单人最优计划出发交替计算最佳响应，在30轮上限内收敛；随后固定对手，对双方各再做一次完整最佳响应。结果见\cref{tab:level5-eq}。
+
+\begin{table}[H]
+\centering
+\caption{第五关非对称纯策略Nash均衡}
+\label{tab:level5-eq}
+\begin{tabularx}{0.94\textwidth}{C{1.2cm} C{1.8cm} Y C{1.2cm} C{1.8cm} C{2.0cm}}
+\toprule
+玩家 & 初始水/食物 & 行动序列 & 到达日 & 终值/元 & 最大偏离增益/元\\
+\midrule
+1 & 27/33 & $1\to4$，停留，$4\to6\to13$ & 4 & \textbf{9535} & 0\\
+2 & 30/34 & $1\to5\to6\to13$ & 3 & \textbf{9510} & 0\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+第2日是高温，玩家1在4区停留，把两个移动日推迟到第3、4日晴朗；玩家2从5区走另一条首段路线。两人的同日有向边没有重叠。低基础收益使绕矿不具吸引力，因此均衡核心是“天气错峰+空间分流”，而不是抢矿。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.98\textwidth]{level5_equilibrium.pdf}
+  \caption{第五关均衡的空间路径、行动时序与偏离复核}
+  \label{fig:level5}
+\end{figure}
+
+\subsection{第六关：三人联合反馈模拟}
+
+第六关每天先揭示天气，再由三名玩家根据上一日公开的联合状态选择行动。联合模拟器逐日完成：行动前村庄购买分组、同向边分组、同矿分组、资源扣除、收益分摊、行动后购买、失败和终点结算。四种策略用于机制消融：
+
+\begin{enumerate}
+  \item \textbf{镜像挖矿：}三人复制单人矿山阈值策略；
+  \item \textbf{分路直达：}两人分别走上侧和左侧8日最短路，第三人错峰1个非沙暴日后跟随；
+  \item \textbf{拥挤感知非合作：}先分路到矿山，在场且资源安全者都加入挖矿；
+  \item \textbf{合作轮换：}先分路到矿山，每天最多安排一人挖矿，作为可协调对照。
+\end{enumerate}
+
+分路直达的初始水食从180到220箱、步长5搜索，共9个候选。训练阶段基准和不利分布各3000条天气，风险预算分别为玩家失败率不超过0.2\%和0.5\%；入选每人185箱水、185箱食物。测试阶段换用种子20260921起的20000条天气/分布，即每种分布60000个玩家观测。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.96\textwidth]{level6_tradeoff.pdf}
+  \caption{第六关四类反馈策略跨天气分布的失败风险与总体终值}
+  \label{fig:level6-tradeoff}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{第六关分路直达策略的独立样本外结果}
+\label{tab:level6-direct}
+\begin{tabular}{lrrrr}
+\toprule
+天气模型 & 玩家失败率 & 95\% Wilson区间 & 总体均值/元 & 5\%分位/元\\
+\midrule
+低沙暴 & 0 & [0, 0.0064\%] & 7820.3 & 7612.5\\
+基准 & 0.0167\% & [0.0091\%, 0.0307\%] & \textbf{7767.6} & 7542.5\\
+不利 & 0.415\% & [0.3666\%, 0.4697\%] & 7637.4 & 7395.0\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+基准分布下，镜像挖矿、拥挤感知非合作、合作轮换的玩家失败率分别为97.865\%、12.362\%和6.978\%；总体均值分别为142.6、7122.8和8326.6元。合作轮换均值高于直达，却远超0.2\%风险预算；故风险受控推荐是分路直达。
+
+\subsection{外部性分解与角色公平}
+
+\cref{fig:level6-mechanism}给出基准天气的机制量。镜像挖矿每局产生19.44个共享边玩家日，三人往往尚未到矿山就因6倍移动消耗失败。拥挤感知非合作把共享边降至4.02，却产生8.74个共享矿山玩家日；合作轮换消除共享矿山，但等待时间抬高尾部失败。分路直达两类共享玩家日均为0。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.98\textwidth]{level6_mechanism.pdf}
+  \caption{第六关多人策略的共享边、共享矿山与失败率分解}
+  \label{fig:level6-mechanism}
+\end{figure}
+
+固定角色下，第三名玩家因错峰在基准分布平均少59.4元。第0天用公开随机数将三名玩家均匀分配到三种角色，则每名玩家的事前期望都等于三种角色均值，既不改变路线外部性，也消除身份固定造成的事前不公平。
+
+\begin{resultbox}{问题三结论}
+第五关的9535/9510元组合通过完整最佳响应检验，属于精确纯策略均衡\evidence{E3}。第六关推荐185/185箱的分路直达反馈策略，属于风险预算内的独立样本外推荐\evidence{E4}，不宣称已经求得整个随机动态博弈的Markov完美均衡。
+\end{resultbox}

@@ -1,0 +1,67 @@
+\section{统一建模框架}
+
+\subsection{基本符号}
+
+\begin{table}[H]
+\centering
+\caption{核心符号与含义}
+\label{tab:symbols}
+\begin{tabularx}{0.96\textwidth}{C{1.8cm}Y C{1.8cm}Y}
+\toprule
+符号 & 含义 & 符号 & 含义\\
+\midrule
+$G=(V,E)$ & 区域邻接图 & $T$ & 截止日期\\
+$z_t$ & 第 $t$ 天天气 & $l_t$ & 日末位置\\
+$w_t,f_t$ & 日末水、食物库存 & $m_t$ & 日末现金\\
+$a_t$ & 移动、停留或挖矿行动 & $b^w_t,b^f_t$ & 当日购买量\\
+$c^r_z$ & 资源 $r$ 在天气 $z$ 下的基础消耗 & $\lambda_t$ & 行动消耗倍数\\
+$B$ & 矿山基础收益 & $C$ & 负重上限\\
+$n,k$ & 总玩家数、同组行动人数 & $J_i$ & 玩家 $i$ 的终值\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{状态转移和收益}
+
+单人状态写为 $s_t=(t,l_t,w_t,f_t,m_t)$。设 $r\in\{w,f\}$，行动倍数为
+\[
+\lambda(a_t)=
+\begin{cases}
+2,&a_t=\text{移动},\\
+1,&a_t=\text{停留},\\
+3,&a_t=\text{挖矿}.
+\end{cases}
+\]
+则不含购买时的库存转移为
+\begin{equation}
+r_t=r_{t-1}-\lambda(a_t)c^r_{z_t},\qquad r_t\ge0,
+\label{eq:resource}
+\end{equation}
+并在每日采购后满足
+\begin{equation}
+3w_t+2f_t\le1200.
+\label{eq:capacity}
+\end{equation}
+若在矿山挖矿，现金增加 $B$；村庄购买单价是基准价两倍；终点终值为
+\begin{equation}
+J=m_\tau+\tfrac12p_ww_\tau+\tfrac12p_ff_\tau,
+\label{eq:terminal}
+\end{equation}
+其中 $\tau\le T$ 为首次到达日。
+
+\subsection{证据等级与统一验收}
+
+为避免把不同强度的计算结论混在一起，本文采用四级证据：
+
+\begin{enumerate}
+  \item \evidence{E1} 求解器最优证书与独立回放，对应“全局最优”；
+  \item \evidence{E2} 完整状态或天气支撑精确枚举，对应“给定模型下精确最优”；
+  \item \evidence{E3} 完整最佳响应检验，对应“纯策略均衡”；
+  \item \evidence{E4} 独立种子样本外评估与区间，对应“条件推荐”。
+\end{enumerate}
+
+所有策略都经过独立规则入口回放。Monte Carlo 中失败样本的终值统一记为0，成功样本均值只用于解释“到达后的财富”，选模和结论使用含失败的总体效用。
+
+\begin{resultbox}{统一边界}
+问题一可以证明全局最优；第三、五关可以在给定有限支撑或策略空间内精确验证；第四、六关因天气分布未给，只能在声明分布和风险预算下推荐。四类表述不可互换。
+\end{resultbox}

@@ -1,1 +1,5 @@
 highspy==1.15.1
+matplotlib==3.11.1
+networkx==3.6.1
+numpy==2.5.1
+pandas==3.0.3

@@ -1,0 +1,103 @@
+\setmainfont{Times New Roman}
+\setCJKmainfont[BoldFont={Heiti SC}]{Songti SC}
+\setCJKsansfont{Heiti SC}
+\setCJKmonofont{Kaiti SC}
+
+\usepackage[a4paper,left=24mm,right=24mm,top=22mm,bottom=23mm,headsep=5mm]{geometry}
+\usepackage{amsmath,amssymb,bm,mathtools}
+\usepackage{booktabs,tabularx,longtable,array,multirow,threeparttable}
+\usepackage{graphicx,float,placeins,caption,subcaption}
+\usepackage{xcolor,colortbl}
+\usepackage{etoolbox}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{microtype}
+\usepackage{needspace}
+\usepackage[most]{tcolorbox}
+\usepackage{listings}
+\usepackage{siunitx}
+\usepackage{tikz}
+\usepackage{hyperref}
+\usepackage[nameinlink,noabbrev]{cleveref}
+\usetikzlibrary{arrows.meta,positioning,calc}
+
+\definecolor{DesertNavy}{HTML}{17324D}
+\definecolor{OasisTeal}{HTML}{168C8C}
+\definecolor{SandGold}{HTML}{D6A64A}
+\definecolor{RiskRed}{HTML}{C45A3C}
+\definecolor{WarmSand}{HTML}{F6F0E6}
+\definecolor{Ink}{HTML}{1B1F23}
+\definecolor{QuietGray}{HTML}{6F7B85}
+\definecolor{RuleGray}{HTML}{D9E0E5}
+
+\graphicspath{{figures/generated/}}
+\hypersetup{hidelinks,pdftitle={基于时空网络、随机动态规划与拥挤博弈的穿越沙漠策略研究},pdfauthor={}}
+\pagestyle{fancy}
+\setlength{\headheight}{22pt}
+\fancyhf{}
+\fancyhead[L]{\small\color{QuietGray}穿越沙漠：优化、反馈与博弈}
+\fancyhead[R]{\small\color{QuietGray}\nouppercase{\leftmark}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.35pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{SandGold}\leaders\hrule height \headrulewidth\hfill}}
+
+\ctexset{
+  section={name={,},number=\arabic{section},format=\Large\sffamily\bfseries\color{DesertNavy},beforeskip=1.4ex,afterskip=0.85ex},
+  subsection={format=\large\sffamily\bfseries\color{DesertNavy},beforeskip=1.1ex,afterskip=0.55ex},
+  subsubsection={format=\normalsize\sffamily\bfseries\color{OasisTeal},beforeskip=0.9ex,afterskip=0.4ex}
+}
+\titleformat{\section}{\Large\sffamily\bfseries\color{DesertNavy}}{\thesection}{0.65em}{}[\vspace{0.2ex}{\color{SandGold}\titlerule[0.8pt]}]
+\titlespacing*{\section}{0pt}{1.35em}{0.75em}
+\pretocmd{\section}{\Needspace{8\baselineskip}}{}{}
+\linespread{1.31}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0.08em}
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.18}
+\setlist[itemize]{leftmargin=2em,itemsep=0.18em,topsep=0.3em}
+\setlist[enumerate]{leftmargin=2.2em,itemsep=0.22em,topsep=0.35em}
+\setlength{\textfloatsep}{0.9em plus 0.2em minus 0.2em}
+\setlength{\floatsep}{0.8em plus 0.2em minus 0.2em}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.78}
+\captionsetup{font=small,labelfont={bf,color=DesertNavy},labelsep=quad,justification=centering,width=0.92\linewidth}
+\captionsetup[table]{position=top,skip=0.35em}
+\captionsetup[figure]{position=bottom,skip=0.4em}
+\AtBeginEnvironment{tabular}{\small}
+\AtBeginEnvironment{tabularx}{\small}
+\AtBeginEnvironment{longtable}{\small}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{Z}{>{\centering\arraybackslash}X}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\sisetup{group-minimum-digits=4,table-number-alignment=center}
+\setlength{\emergencystretch}{2em}
+
+\newtcolorbox{resultbox}[1]{
+  enhanced,breakable,colback=WarmSand!52,colframe=SandGold!80!black,
+  boxrule=0.45pt,leftrule=2.2pt,arc=1.5pt,left=7pt,right=7pt,top=5pt,bottom=5pt,
+  title={#1},fonttitle=\small\sffamily\bfseries,coltitle=DesertNavy,
+  colbacktitle=WarmSand!75,attach boxed title to top left={xshift=0pt,yshift=-1pt},
+  boxed title style={boxrule=0pt,arc=1pt},before skip=0.8em,after skip=0.8em,
+  fontupper=\small
+}
+\newtcolorbox{boundarybox}{
+  enhanced,breakable,colback=white,colframe=RiskRed!75,boxrule=0.4pt,
+  leftrule=2pt,arc=1pt,left=7pt,right=7pt,top=5pt,bottom=5pt,
+  before skip=0.75em,after skip=0.75em,fontupper=\small
+}
+\newcommand{\evidence}[1]{\textcolor{OasisTeal}{\sffamily\bfseries[#1]}}
+\newcommand{\R}{\mathbb{R}}
+\crefname{figure}{图}{图}
+\crefname{table}{表}{表}
+\crefname{equation}{式}{式}
+
+\lstset{
+  basicstyle=\ttfamily\scriptsize,keywordstyle=\bfseries\color{DesertNavy},
+  commentstyle=\color{QuietGray},stringstyle=\color{OasisTeal},numbers=left,
+  numberstyle=\tiny\color{QuietGray},frame=single,rulecolor=\color{RuleGray},
+  breaklines=true,showstringspaces=false,columns=fullflexible,backgroundcolor=\color{WarmSand!25}
+}

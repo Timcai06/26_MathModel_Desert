@@ -1,0 +1,61 @@
+\section{可复现算法与逐日流水}
+
+\subsection{核心算法伪代码}
+
+\begin{resultbox}{算法A：确定天气时空网络}
+\begin{enumerate}[leftmargin=1.8em]
+  \item 从场景对象读取邻接图、天气、特殊节点与资源参数；
+  \item 创建日期—位置二元流变量、行动变量、购买量、库存和现金变量；
+  \item 加入每日唯一行动、位置流、沙暴禁行、矿山、村庄、资源、现金和负重约束；
+  \item 最大化终点现金与半价回收，调用HiGHS；
+  \item 把最优变量转换为逐日计划，交独立模拟器回放；任何规则不一致则拒绝输出。
+\end{enumerate}
+\end{resultbox}
+
+\begin{resultbox}{算法B：天气先揭示的有限时域MDP}
+\begin{enumerate}[leftmargin=1.8em]
+  \item 枚举所有满足现金与负重的整数初始采购；
+  \item 从截止日反向计算 $V_t(t,l,w,f)$，对当天每种支撑天气先观察再选行动；
+  \item 若任一正概率后继无法按时到达，则当前动作不可行；
+  \item 在第0日选择期望值最大的采购，并保存确定性策略表；
+  \item 对全部天气支撑逐条回放，复核Bellman值和失败数。
+\end{enumerate}
+\end{resultbox}
+
+\begin{resultbox}{算法C：第五关完整最佳响应}
+\begin{enumerate}[leftmargin=1.8em]
+  \item 固定对手逐日计划，构造其“日期—起点—行动”时间表；
+  \item 在状态 $(t,l,W,F)$ 上枚举移动、停留、挖矿，并按同边/同矿规则计算自身增量；
+  \item 对相同状态只保留挖矿收入最高标签，用最短距离剪去无法到达状态；
+  \item 交替求两人的最佳响应直至计划不变；
+  \item 固定最终对手计划再完整求解一次，报告最大偏离增益。
+\end{enumerate}
+\end{resultbox}
+
+\subsection{第一、二关完整逐日流水}
+
+表\ref{tab:daily-ledger}由\path{output/problem1/known_weather_exact.json}自动生成；购买栏为“水/食物”。
+\input{tables/generated/known_weather_daily.tex}
+
+\subsection{复现实验索引}
+
+\begin{table}[H]
+\centering
+\caption{关键命令、输入与输出}
+\begin{tabularx}{0.96\textwidth}{L{3.2cm} Y Y}
+\toprule
+命令 & 主要输入 & 主要输出\\
+\midrule
+\texttt{make test} & 场景、模拟器、策略与博弈代码 & 20项规则与回归测试\\
+\texttt{make solve-known} & 第一、二关地图和30天天气 & \texttt{known\_weather\_exact.json}\\
+\texttt{make analyze-problem2} & 第三、四关场景 & MDP敏感性和手工策略基线\\
+\texttt{make optimize-level4} & 567候选、训练/测试种子 & 第四关搜索和20000条样本外结果\\
+\texttt{make analyze-problem3} & 第五、六关多人场景 & 均衡、装载搜索、四策略比较\\
+\texttt{make figures} & 全部JSON/CSV & 9张PDF/PNG候选图\\
+\texttt{make result} & 精确流水、原Result模板 & 最终\texttt{Result.xlsx}\\
+\texttt{make deliver} & 全部计算结果与论文源文件 & 最终PDF与Excel交付物\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+随机实验的训练、测试种子和样本数均写入对应JSON；所有输出表使用UTF-8 with BOM以便Excel直接打开。最终论文引用的图只从候选目录晋级到\path{paper/figures/generated/}，避免试验图混入交付。

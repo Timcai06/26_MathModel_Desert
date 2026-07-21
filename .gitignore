@@ -4,6 +4,9 @@ __pycache__/
 *.py[cod]
 .cache/
 .pytest_cache/
+tmp/
+.omx/
+output/candidate_figures/
 paper/build/
 *.aux
 *.fdb_latexmk
