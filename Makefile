@@ -3,7 +3,7 @@ LATEXMK ?= latexmk
 VENV_PYTHON := .venv/bin/python
 PYTHONPATH_VALUE := src
 
-.PHONY: setup test solve-known analyze-problem2 optimize-level4 analyze-problem3 figures paper-assets paper result verify deliver all
+.PHONY: setup test solve-known analyze-problem2 optimize-level4 analyze-problem3 analyze-robustness figures paper-assets paper result verify deliver all
 
 setup:
 	$(PYTHON) -m venv .venv
@@ -25,6 +25,9 @@ optimize-level4:
 
 analyze-problem3:
 	PYTHONPATH=$(PYTHONPATH_VALUE) $(PYTHON) scripts/analyze_problem3.py
+
+analyze-robustness:
+	PYTHONPATH=$(PYTHONPATH_VALUE) $(PYTHON) scripts/analyze_robustness.py
 
 figures:
 	PYTHONPATH=$(PYTHONPATH_VALUE) $(VENV_PYTHON) scripts/generate_figures.py
@@ -49,4 +52,4 @@ deliver: paper result
 	cp paper/build/main.pdf "output/final/穿越沙漠策略研究_完整稿.pdf"
 	cp paper/build/main.pdf "output/pdf/穿越沙漠策略研究_完整稿.pdf"
 
-all: solve-known analyze-problem2 optimize-level4 analyze-problem3 verify deliver
+all: solve-known analyze-problem2 optimize-level4 analyze-problem3 analyze-robustness verify deliver

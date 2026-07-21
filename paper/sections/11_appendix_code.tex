@@ -32,6 +32,26 @@
 
 \lstinputlisting[language=Python,firstline=34,lastline=52,caption={Wilson得分区间的数值实现},label={code:wilson}]{../src/desert/evaluation.py}
 
+\subsection{保持平稳边际的Markov天气生成器}
+
+代码\ref{code:markov-weather}实现\cref{eq:markov-persistence}。构造函数逐行验证初始分布与转移矩阵，\texttt{from\_stationary}再以$\rho I+(1-\rho)\bm 1p^\top$生成转移概率；采样时只使用当前天气，不访问未来状态。
+
+\lstinputlisting[language=Python,firstline=42,lastline=136,caption={保持平稳边际的Markov天气模型与序列采样},label={code:markov-weather}]{../src/desert/weather.py}
+
+\subsection{最短路偏离类与异质角色策略}
+
+代码\ref{code:level6-oracle}先按到终点的BFS距离，只沿距离减1的边深搜，从而完整枚举70条最短路；随后将每名玩家的路线、装载和错峰天数封装为可单边替换的策略剖面。这一结构保证最佳响应实验改动玩家$i$时，$\pi_{-i}$保持逐字节一致。
+
+\lstinputlisting[language=Python,firstline=10,lastline=130,caption={第六关最短路枚举、角色策略与单边偏离构造},label={code:level6-oracle}]{../src/desert/level6_oracle.py}
+
+\subsection{二维装载校准与预言机筛选}
+
+代码\ref{code:robust-calibration}对三种错峰角色枚举二维装载，并在模糊集所有点上以Wilson上界判定可行；代码\ref{code:oracle-screening}则对每名玩家完整扫描风险校准后的路线—错峰偏离类。
+
+\lstinputlisting[language=Python,firstline=213,lastline=265,caption={角色条件装载的分布鲁棒校准},label={code:robust-calibration}]{../scripts/analyze_robustness.py}
+
+\lstinputlisting[language=Python,firstline=319,lastline=361,caption={受约束最佳响应预言机的完整候选筛选},label={code:oracle-screening}]{../scripts/analyze_robustness.py}
+
 \subsection{代码—公式—输出追踪关系}
 
 \begin{table}[H]
@@ -46,6 +66,8 @@
 风险阈值策略 & \path{level4_policies.py} & 候选前沿、失败率、Wilson区间\\
 最佳响应博弈 & \path{level5_game.py} & 均衡路径、两方偏离增益\\
 多人联合转移 & \path{multiplayer.py} & 共享边/矿山玩家日、角色均值、失败率\\
+Markov天气 & \path{weather.py} & 平稳边际、转移概率、连续沙暴统计\\
+分布鲁棒校准 & \path{analyze_robustness.py} & 模糊集压力曲线、角色装载、偏离可利用度\\
 统计评估 & \path{evaluation.py} & 均值、分位数、均值区间、Wilson区间\\
 \bottomrule
 \end{tabularx}

@@ -8,7 +8,7 @@ from statistics import mean, median, pstdev
 from .model import Scenario
 from .online import OnlinePolicy, simulate_policy
 from .simulator import SimulationError
-from .weather import IIDWeatherModel
+from .weather import IIDWeatherModel, MarkovWeatherModel
 
 
 @dataclass(frozen=True)
@@ -111,7 +111,7 @@ def evaluate_weather_sequences(
 def monte_carlo_evaluate(
     scenario: Scenario,
     policy: OnlinePolicy,
-    weather_model: IIDWeatherModel,
+    weather_model: IIDWeatherModel | MarkovWeatherModel,
     samples: int,
     seed: int,
 ) -> EvaluationSummary:

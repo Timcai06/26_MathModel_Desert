@@ -119,7 +119,7 @@ J_i=M_0-p_wW_\tau-p_fF_\tau+D_\tau(v_T,W_\tau,F_\tau).
   \item \textbf{合作轮换：}先分路到矿山，每天最多安排一人挖矿，作为可协调对照。
 \end{enumerate}
 
-分路直达的初始水食从180到220箱、步长5搜索，共9个候选。设装载参数$q$表示每人初始水、食物均为$q$箱，训练选择为
+先在IID假设下建立效率基准。分路直达的初始水食从180到220箱、步长5搜索，共9个候选。设装载参数$q$表示每人初始水、食物均为$q$箱，训练选择为
 \begin{equation}
 q^*=\arg\max_{q\in\{180,185,\ldots,220\}}
 \widehat\mu_{\mathrm{adv}}(q)
@@ -152,7 +152,91 @@ q^*=\arg\max_{q\in\{180,185,\ldots,220\}}
 \end{tabular}
 \end{table}
 
-基准分布下，镜像挖矿、拥挤感知非合作、合作轮换的玩家失败率分别为97.865\%、12.362\%和6.978\%；总体均值分别为142.6、7122.8和8326.6元。合作轮换均值高于直达，却远超0.2\%风险预算；故风险受控推荐是分路直达。
+基准分布下，镜像挖矿、拥挤感知非合作、合作轮换的玩家失败率分别为97.865\%、12.362\%和6.978\%；总体均值分别为142.6、7122.8和8326.6元。合作轮换均值高于直达，却远超0.2\%风险预算；故IID层面的风险受控基准是分路直达，下一节再检验其面对天气持续性的稳定性。
+
+\subsection{角色条件装载与分布鲁棒策略}
+
+185/185箱是IID模型下的效率点，但连续坏天气会使它越过风险预算。沿用\cref{eq:weather-ambiguity-set}的模糊集，将最短路角色按出发前自愿错峰天数$d$分类。对$d\in\{0,1,2\}$，在水、食物180--240箱、步长5的二维网格$\mathcal L$上校准
+\begin{equation}
+(w_d^*,f_d^*)=
+\arg\max_{(w,f)\in\mathcal L}
+\min_{\mathbb P\in\mathcal P}\widehat{\mathbb E}_{\mathbb P}[J(w,f,d)]
+\quad\text{s.t.}\quad
+U_W\!\left(X_{\mathbb P};N\right)\le\alpha(p),
+\ \forall\mathbb P\in\mathcal P,
+\label{eq:role-conditional-load}
+\end{equation}
+其中$U_W$是\cref{eq:wilson-center,eq:wilson-halfwidth}给出的失败率Wilson上界，而非失败率点估计。没有边拥挤时，八个移动日加$d$个非沙暴停留日的资源需求可直接写成
+\begin{align}
+R_w(z_{1:\tau};d)&=\sum_{t=1}^{\tau}\lambda_t(d)c^w_{z_t},\qquad
+R_f(z_{1:\tau};d)=\sum_{t=1}^{\tau}\lambda_t(d)c^f_{z_t},
+\label{eq:direct-role-requirement}\\
+\lambda_t(d)&=
+\begin{cases}
+1,&z_t=\text{沙暴或当日用于自愿错峰},\\
+2,&\text{当日沿最短路移动},
+\end{cases}
+\end{align}
+到达所需的第八个非沙暴移动日为$\tau$。若$R_w>w$或$R_f>f$则失败记0；否则终值为
+\begin{equation}
+J=10000-\frac12p_ww-\frac12p_ff
+-\frac12p_wR_w-\frac12p_fR_f,
+\label{eq:direct-role-value}
+\end{equation}
+因为未消耗库存按半价回收。该式也解释了为什么在通过风险约束后，继续加装会单调降低期望终值。
+
+每个模糊集点使用30000条校准序列。$d=0$的最优可行装载为215/215箱，$d=1$为225/230箱；$d=2$在1200千克容量内没有同时通过两档风险预算的装载。因此最终剖面为两名玩家立即从不同方向出发、各装215/215箱，第三名玩家装225/230箱并错峰一个非沙暴日。公开随机置换三个角色后，每个人承担相同的事前混合风险，但角色条件装载还额外保证每个固定角色单独过线。
+
+\begin{table}[H]
+\centering
+\caption{第六关分布鲁棒剖面的独立样本外结果}
+\label{tab:level6-robust}
+\begin{tabular}{lrrrr}
+\toprule
+边际天气 & $\rho$ & 玩家失败率 & 固定角色最大Wilson上界 & 总体均值/元\\
+\midrule
+基准 & 0 & 0 & 0.0128\% & 7509.6\\
+基准 & 0.35 & 0.0600\% & 0.1030\% & 7499.4\\
+不利 & 0 & 0.0056\% & 0.0390\% & 7410.0\\
+不利 & 0.35 & 0.3400\% & 0.4344\% & \textbf{7383.3}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+表中每档30000局。“玩家失败率”按三角色合并统计；验收列则分别对三个固定角色各用30000个独立天气样本计算Wilson上界，再取最大值，避免把同局三人的相关结果误当作90000个独立Bernoulli观测。模糊集内最坏固定角色上界0.4344\%仍低于0.5\%预算。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.98\textwidth]{robust_load_calibration.pdf}
+  \caption{第六关错峰角色的二维装载可行域与分布鲁棒入选点}
+  \label{fig:robust-load-calibration}
+\end{figure}
+
+\subsection{受约束最佳响应预言机与可利用度}
+
+5乘5网格从1到25的最短路需要4次向右和4次向下，因此共有
+\begin{equation}
+|\mathcal R|=\binom{8}{4}=70
+\label{eq:shortest-route-count}
+\end{equation}
+条。构造偏离类$\Pi_i^{\mathcal C}$：玩家$i$可在70条最短路中任意换路，并选择$d=0$或1；装载使用\cref{eq:role-conditional-load}为该$d$校准的风险最优装载。$d=2$因不存在风险可行装载而剔除。于是每名玩家有$70\times2=140$个可审计偏离，而对手保持推荐剖面。
+
+令分布鲁棒收益$\underline J_i(\pi)=\min_{\mathbb P\in\mathcal P}\mathbb E_{\mathbb P}[J_i(\pi)]$，定义受约束可利用度
+\begin{equation}
+\epsilon_i^{\mathcal C}=
+\max_{\pi_i'\in\Pi_i^{\mathcal C}:\,U_W\le\alpha}
+\underline J_i(\pi_i',\pi_{-i}^*)
+-\underline J_i(\pi_i^*,\pi_{-i}^*).
+\label{eq:class-exploitability}
+\end{equation}
+预言机先在经验最不利角点“不利边际、$\rho=0.35$”用1500条配对序列完整筛选，再在$\mathcal P$每个点各用30000条新序列复核入选偏离。三个角色的最佳响应都只是换到另一条不发生同向边重合的等价最短路，样本外收益与原角色逐样本相同，故$\epsilon_i^{\mathcal C}=0$。这把原先的“比较四种策略”推进到显式偏离检验；但$\Pi_i^{\mathcal C}$不含绕矿、村庄补给及任意历史依赖策略，因此结论是类约束$\epsilon$-均衡，而非整个随机动态博弈的Markov完美均衡。
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\textwidth]{level6_exploitability.pdf}
+  \caption{第六关推荐剖面与受约束最佳响应的样本外收益比较}
+  \label{fig:level6-exploitability}
+\end{figure}
 
 \subsection{外部性分解与角色公平}
 
@@ -165,7 +249,7 @@ q^*=\arg\max_{q\in\{180,185,\ldots,220\}}
   \label{fig:level6-mechanism}
 \end{figure}
 
-固定角色下，第三名玩家因错峰在基准分布平均少59.4元。设三个路线角色的期望终值为$\mu_1,\mu_2,\mu_3$，第0天生成与身份无关的均匀随机置换$\sigma$，把玩家$i$分配到角色$\sigma(i)$。则对任意玩家$i$，
+分布鲁棒装载下，第三名玩家因错峰与更高安全库存，在基准IID分布平均比前两名少155.2元；不利边际、$\rho=0.35$时角色差为165.9元。设三个路线角色的期望终值为$\mu_1,\mu_2,\mu_3$，第0天生成与身份无关的均匀随机置换$\sigma$，把玩家$i$分配到角色$\sigma(i)$。则对任意玩家$i$，
 \begin{equation}
 \mathbb E[J_i]
 =\sum_{r=1}^3\Pr\{\sigma(i)=r\}\mu_r
@@ -175,5 +259,5 @@ q^*=\arg\max_{q\in\{180,185,\ldots,220\}}
 所以随机置换不改变三条路线的联合占用和系统总收益，却使每名玩家获得相同的事前期望。固定角色的事后收益仍可能不同，这里主张的是事前公平而非逐局完全相等。
 
 \begin{resultbox}{问题三结论}
-第五关的9535/9510元组合通过完整最佳响应检验，属于精确纯策略均衡\evidence{E3}。第六关推荐185/185箱的分路直达反馈策略，属于风险预算内的独立样本外推荐\evidence{E4}，不宣称已经求得整个随机动态博弈的Markov完美均衡。
+第五关的9535/9510元组合通过完整最佳响应检验，属于精确纯策略均衡\evidence{E3}。第六关在IID下以185/185箱为效率基准；最终分布鲁棒推荐采用215/215、215/215与225/230箱的异路错峰剖面，并在每名玩家140个路线—错峰偏离类中得到零可利用度\evidence{E4}。该结论不外推为完整Markov完美均衡。
 \end{resultbox}

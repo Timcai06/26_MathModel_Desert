@@ -91,6 +91,7 @@ def evaluate_level6_policy(
     scenario = get_scenario(6)
     individual_values: list[float] = []
     role_values: list[list[float]] = [[] for _ in range(scenario.player_count)]
+    role_failures = [0 for _ in range(scenario.player_count)]
     arrivals: list[int] = []
     failed_players = 0
     failed_sessions = 0
@@ -107,6 +108,7 @@ def evaluate_level6_policy(
             role_values[role].append(numeric)
             if value is None:
                 failed_players += 1
+                role_failures[role] += 1
                 session_failed = True
             else:
                 arrival = result.records[-1].states[role].arrival_day
@@ -135,6 +137,7 @@ def evaluate_level6_policy(
     value_mean = mean(individual_values)
     margin = 1.959963984540054 * pstdev(individual_values) / math.sqrt(player_observations)
     role_means = [mean(values) for values in role_values]
+    role_intervals = [_wilson(events, len(weather_sequences)) for events in role_failures]
     return {
         "samples": len(weather_sequences),
         "player_observations": player_observations,
@@ -152,6 +155,13 @@ def evaluate_level6_policy(
         "role2_mean": role_means[1],
         "role3_mean": role_means[2],
         "role_mean_gap": max(role_means) - min(role_means),
+        "role1_failure_rate": role_failures[0] / len(weather_sequences),
+        "role2_failure_rate": role_failures[1] / len(weather_sequences),
+        "role3_failure_rate": role_failures[2] / len(weather_sequences),
+        "role1_failure_wilson_high": role_intervals[0][1],
+        "role2_failure_wilson_high": role_intervals[1][1],
+        "role3_failure_wilson_high": role_intervals[2][1],
+        "max_role_failure_wilson_high": max(high for _low, high in role_intervals),
         "mean_arrival_day": mean(arrivals) if arrivals else None,
         "shared_edge_player_days_per_session": shared_edge_player_days / len(weather_sequences),
         "shared_mine_player_days_per_session": shared_mine_player_days / len(weather_sequences),

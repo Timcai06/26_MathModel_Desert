@@ -1,0 +1,91 @@
+{
+  "seed_base": 20261021,
+  "ambiguity_set": {
+    "marginals": [
+      "基准",
+      "不利"
+    ],
+    "persistence_values": [
+      0.0,
+      0.15,
+      0.35
+    ],
+    "out_of_set_stress_persistence": 0.7,
+    "risk_budgets": {
+      "基准": 0.002,
+      "不利": 0.005
+    }
+  },
+  "level4_selected": {
+    "sandstorm_budget": 9,
+    "initial_water": 240,
+    "initial_food": 240
+  },
+  "level6_selected": {
+    "role_loads": [
+      [
+        215,
+        215
+      ],
+      [
+        215,
+        215
+      ],
+      [
+        225,
+        230
+      ]
+    ],
+    "voluntary_waits": [
+      0,
+      0,
+      1
+    ],
+    "routes": [
+      [
+        1,
+        2,
+        3,
+        4,
+        5,
+        10,
+        15,
+        20,
+        25
+      ],
+      [
+        1,
+        6,
+        11,
+        16,
+        21,
+        22,
+        23,
+        24,
+        25
+      ],
+      [
+        1,
+        2,
+        3,
+        4,
+        5,
+        10,
+        15,
+        20,
+        25
+      ]
+    ]
+  },
+  "best_response_oracle": {
+    "shortest_route_count": 70,
+    "delay_choices": [
+      0,
+      1
+    ],
+    "candidate_count_per_player": 140,
+    "training_samples": 1500,
+    "test_samples_per_model": 30000,
+    "max_in_set_exploitability": 0.0
+  }
+}

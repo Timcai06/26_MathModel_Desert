@@ -32,7 +32,8 @@ FINAL_FIGURES = {
     "maps_overview", "model_workflow", "known_weather_ledger", "level3_mdp",
     "level4_frontier", "level5_equilibrium", "level6_tradeoff",
     "level6_mechanism", "evidence_matrix", "oos_risk_intervals",
-    "loading_robustness", "role_fairness",
+    "loading_robustness", "role_fairness", "persistence_stress",
+    "robust_load_calibration", "level6_exploitability",
 }
 
 
@@ -366,7 +367,7 @@ def level6_mechanism() -> None:
 def evidence_matrix() -> None:
     rows = ["第一关", "第二关", "第三关", "第四关", "第五关", "第六关"]
     evidence = [1, 1, 2, 4, 3, 4]
-    results = ["10470元", "12730元", "54/54直达", "B5：10163元", "9535/9510元", "直达：7768元"]
+    results = ["10470元", "12730元", "54/54直达", "B9分布鲁棒", "9535/9510元", "角色装载：ε=0"]
     labels = {1: "E1\n最优证书", 2: "E2\n全枚举", 3: "E3\n偏离复核", 4: "E4\n样本外"}
     colors = {1: NAVY, 2: TEAL, 3: GOLD, 4: RED}
     fig, ax = plt.subplots(figsize=(9.3, 4.6))
@@ -482,13 +483,21 @@ def loading_robustness() -> None:
 
 def role_fairness() -> None:
     """比较固定角色收益，并显示随机轮换后的事前公平值。"""
-    df = pd.read_csv(ROOT / "output/problem3/level6_oos_comparison.csv")
-    df = df[df.policy == "分路直达"].set_index("weather_model").loc[["低沙暴", "基准", "不利"]]
+    df = pd.read_csv(ROOT / "output/robustness/level6_robust_comparison.csv")
+    df = df[
+        (df.policy == "角色条件分布鲁棒策略")
+        & (df.weather_model.isin(["基准", "不利"]))
+        & (df.persistence.isin([0.0, 0.35]))
+    ].copy()
+    df["weather_order"] = pd.Categorical(
+        df.weather_model, categories=["基准", "不利"], ordered=True
+    )
+    df = df.sort_values(["weather_order", "persistence"])
     roles = ["role1_mean", "role2_mean", "role3_mean"]
     markers = ["o", "s", "^"]
-    fig, axes = plt.subplots(1, 3, figsize=(11.2, 4.2), sharey=True)
-    for ax, (weather, row) in zip(axes, df.iterrows()):
-        values = [row[col] for col in roles]
+    fig, axes = plt.subplots(1, 4, figsize=(11.2, 4.2), sharey=True)
+    for ax, row in zip(axes, df.itertuples()):
+        values = [getattr(row, col) for col in roles]
         mean = float(np.mean(values))
         ax.plot([1, 2, 3], values, color="#666666", ls="--", lw=1.1)
         for i, (value, marker) in enumerate(zip(values, markers), start=1):
@@ -496,18 +505,134 @@ def role_fairness() -> None:
                        edgecolor=INK, linewidth=1.3, zorder=4)
         ax.axhline(mean, color=INK, lw=1.5, label="角色随机化后的事前均值")
         ax.set_xticks([1, 2, 3], ["角色1", "角色2", "角色3"])
-        ax.set_title(weather, loc="left")
+        ax.set_title(f"{row.weather_model} · ρ={row.persistence:.2f}", loc="left")
         ax.text(0.04, 0.07, f"角色差={row.role_mean_gap:.1f}元\n事前均值={mean:.1f}元",
                 transform=ax.transAxes, fontsize=8, color=GRAY)
         _clean(ax)
     axes[0].set_ylabel("固定角色样本外均值/元")
-    axes[2].legend(loc="upper right", fontsize=8)
+    axes[-1].legend(loc="upper right", fontsize=8)
     fig.suptitle("固定路线存在角色差异，出发前等概率轮换实现事前公平",
                  x=0.06, ha="left", fontsize=15, fontweight="bold")
-    fig.text(0.06, 0.895, "三条路线的空间长度与沙暴暴露不同；随机置换不改变拥挤与安全性",
+    fig.text(0.06, 0.895, "前两角色215/215，错峰角色225/230；随机置换不改变拥挤与安全性",
              color=GRAY, fontsize=8.8)
     fig.tight_layout(rect=[0.04, 0.03, 0.99, 0.84], w_pad=1.6)
     save(fig, "role_fairness")
+
+
+def persistence_stress() -> None:
+    """比较 IID 效率策略与 Markov 分布鲁棒策略的连续天气压力曲线。"""
+    level4 = pd.read_csv(ROOT / "output/robustness/level4_robust_comparison.csv")
+    level6 = pd.read_csv(ROOT / "output/robustness/level6_robust_comparison.csv")
+    fig, axes = plt.subplots(2, 2, figsize=(11.2, 7.0), sharex=True)
+    panels = [
+        (level4, "failure_rate", "第四关", "IID效率策略_B5_240_240", "分布鲁棒策略"),
+        (level6, "player_failure_rate", "第六关", "IID效率策略_185_185", "角色条件分布鲁棒策略"),
+    ]
+    styles = [("#777777", "--", "o", "IID效率策略"), (INK, "-", "s", "分布鲁棒策略")]
+    for row_index, (frame, metric, level, old_name, robust_name) in enumerate(panels):
+        for col_index, weather_name in enumerate(("基准", "不利")):
+            ax = axes[row_index, col_index]
+            for policy, (color, linestyle, marker, label) in zip(
+                (old_name, robust_name), styles
+            ):
+                sub = frame[
+                    (frame.weather_model == weather_name) & (frame.policy == policy)
+                ].sort_values("persistence")
+                ax.plot(
+                    sub.persistence,
+                    np.maximum(sub[metric] * 100, 0.005),
+                    color=color,
+                    ls=linestyle,
+                    marker=marker,
+                    lw=1.8,
+                    ms=5,
+                    label=label,
+                )
+            budget = 0.2 if weather_name == "基准" else 0.5
+            ax.axhline(budget, color="#444444", ls=":", lw=1.1)
+            ax.axvspan(0, 0.35, color="#F1F1F1", zorder=-2)
+            ax.axvline(0.35, color="#999999", ls="-.", lw=0.8)
+            ax.set_title(f"{level} · {weather_name}", loc="left")
+            ax.set_ylabel("玩家失败率/%" if level == "第六关" else "失败率/%")
+            if row_index == 1:
+                ax.set_xlabel("天气持续性 $\\rho$")
+            ax.set_yscale("log")
+            ax.set_ylim(0.004, 15)
+            _clean(ax)
+    axes[0, 0].legend(loc="upper left", fontsize=8)
+    fig.suptitle("连续天气压力检验：保持边际概率不变，只提高时间聚集性",
+                 x=0.06, ha="left", fontsize=15, fontweight="bold")
+    fig.text(0.06, 0.925,
+             "灰底为分布模糊集 $\\rho\\leq0.35$；$\\rho=0.70$ 为集合外破坏性测试；0值置于0.005%绘图下限",
+             color=GRAY, fontsize=8.8)
+    fig.tight_layout(rect=[0.04, 0.03, 0.99, 0.89], h_pad=2.0, w_pad=1.7)
+    save(fig, "persistence_stress")
+
+
+def robust_load_calibration() -> None:
+    """显示错峰天数对应的二维装载可行域及最终入选点。"""
+    df = pd.read_csv(ROOT / "output/robustness/level6_role_load_calibration.csv")
+    fig, axes = plt.subplots(1, 3, figsize=(11.2, 4.35), sharex=True, sharey=True)
+    for wait, ax in enumerate(axes):
+        sub = df[df.voluntary_waits == wait]
+        infeasible = sub[~sub.feasible.astype(bool)]
+        feasible = sub[sub.feasible.astype(bool)]
+        ax.scatter(infeasible.initial_water, infeasible.initial_food, s=13,
+                   facecolor="white", edgecolor="#C4C4C4", linewidth=0.45)
+        if not feasible.empty:
+            ax.scatter(feasible.initial_water, feasible.initial_food, s=22,
+                       color="#4A4A4A", edgecolor="white", linewidth=0.4)
+            chosen = feasible.loc[feasible.worst_mean_value.idxmax()]
+            ax.scatter(chosen.initial_water, chosen.initial_food, marker="*", s=180,
+                       color=INK, edgecolor="white", linewidth=0.7, zorder=5)
+            ax.text(0.04, 0.94,
+                    f"入选 {int(chosen.initial_water)}/{int(chosen.initial_food)}",
+                    transform=ax.transAxes, va="top", fontsize=8.5, fontweight="semibold")
+        else:
+            ax.text(0.04, 0.94, "容量内无可行装载", transform=ax.transAxes,
+                    va="top", fontsize=8.5, color=GRAY)
+        ax.set_title(f"自愿错峰 {wait} 天", loc="left")
+        ax.set_xlabel("初始水/箱")
+        _clean(ax, "both")
+    axes[0].set_ylabel("初始食物/箱")
+    fig.suptitle("角色条件二维装载校准：风险上置信界决定可行域",
+                 x=0.06, ha="left", fontsize=15, fontweight="bold")
+    fig.text(0.06, 0.895,
+             "黑点同时通过基准0.2%与不利0.5%预算；黑星最大化模糊集内最坏总体均值",
+             color=GRAY, fontsize=8.8)
+    fig.tight_layout(rect=[0.04, 0.03, 0.99, 0.84], w_pad=1.6)
+    save(fig, "robust_load_calibration")
+
+
+def level6_exploitability() -> None:
+    """展示最坏集合点上固定角色的受约束偏离收益。"""
+    df = pd.read_csv(ROOT / "output/robustness/level6_exploitability.csv")
+    df = df[(df.weather_model == "不利") & (np.isclose(df.persistence, 0.35))]
+    df = df.sort_values("player")
+    y = np.arange(len(df))
+    fig, ax = plt.subplots(figsize=(9.2, 4.7))
+    ax.hlines(y, df.baseline_mean_value, df.best_response_mean_value,
+              color="#8A8A8A", lw=2)
+    ax.scatter(df.baseline_mean_value, y, marker="o", s=62, facecolor="white",
+               edgecolor="#666666", linewidth=1.3, label="推荐策略")
+    ax.scatter(df.best_response_mean_value, y, marker="s", s=58, color=INK,
+               edgecolor="white", linewidth=0.7, label="预言机最佳响应")
+    for row_index, row in enumerate(df.itertuples()):
+        ax.annotate(f"偏离增益 {row.exploitability:.1f} 元",
+                    (max(row.baseline_mean_value, row.best_response_mean_value), row_index),
+                    xytext=(8, 0), textcoords="offset points", va="center", fontsize=8)
+    ax.set_yticks(y, [f"角色{int(player)}" for player in df.player])
+    ax.invert_yaxis()
+    ax.set_xlabel("失败记0后的个体终值均值/元")
+    ax.legend(loc="lower right")
+    _clean(ax, "x")
+    fig.suptitle("第六关受约束最佳响应预言机：140个偏离/角色",
+                 x=0.08, ha="left", fontsize=15, fontweight="bold")
+    fig.text(0.08, 0.89,
+             "最坏集合点：不利边际、$\\rho=0.35$；搜索70条最短路×2种可行错峰装载",
+             color=GRAY, fontsize=8.8)
+    fig.tight_layout(rect=[0.05, 0.04, 0.98, 0.83])
+    save(fig, "level6_exploitability")
 
 
 def main() -> None:
@@ -524,6 +649,9 @@ def main() -> None:
     oos_risk_intervals()
     loading_robustness()
     role_fairness()
+    persistence_stress()
+    robust_load_calibration()
+    level6_exploitability()
     print(OUT)
 
 

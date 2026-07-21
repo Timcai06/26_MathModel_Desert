@@ -129,6 +129,63 @@ f_{t-1}-3c^f_{z_t} &\ge 2d_tc^f_{\text{高温}}+\widehat B_t c^f_{\text{沙暴}}
 
 基准天气下，入选B5比原B6策略总体均值高418.3元；不利天气下高391.9元，并保持失败率上置信界0.481\%低于0.5\%预算。B4虽有更高成功者均值，但基准与不利失败率分别升至0.145\%和1.005\%，不符合不利分布预算。
 
+\subsection{保持边际概率的Markov持续性扩展}
+
+独立同分布假设固定了每天的边际频率，却不能表示连续高温或连续沙暴。为把“天气聚集”与“天气占比”分离，令$p=(p_s,p_h,p_b)$为前述边际分布，引入持续性参数$\rho\in[0,1)$，定义一阶Markov转移矩阵
+\begin{equation}
+P_\rho(z,z')=\rho\bm 1_{\{z=z'\}}+(1-\rho)p_{z'}.
+\label{eq:markov-persistence}
+\end{equation}
+当$\rho=0$时退化为IID；$\rho$增大时，次日以更高概率保持当天状态。该构造并未暗中改变沙暴边际概率，因为
+\begin{equation}
+(p^\top P_\rho)_{z'}
+=\rho p_{z'}+(1-\rho)p_{z'}\sum_zp_z=p_{z'},
+\label{eq:markov-stationary-proof}
+\end{equation}
+故$p$仍是$P_\rho$的平稳分布。相邻两日天气相同的概率为
+\begin{equation}
+\Pr(Z_{t+1}=Z_t)=\rho+(1-\rho)\sum_{z\in\mathcal Z}p_z^2,
+\label{eq:same-weather-probability}
+\end{equation}
+从而$\rho$只控制序列聚集性，避免把相关性压力测试误写成“提高沙暴概率”。
+
+题面没有转移矩阵，本文不估计一个虚假的单点$\rho$，而使用有限分布模糊集
+\begin{equation}
+\mathcal P=\left\{\mathbb P(p,\rho):
+p\in\{p^{\mathrm{base}},p^{\mathrm{adv}}\},\quad
+\rho\in\{0,0.15,0.35\}\right\}.
+\label{eq:weather-ambiguity-set}
+\end{equation}
+$\rho=0.70$只作为集合外破坏性检验，不参与选模。对候选$\theta$，分布鲁棒选择写为
+\begin{equation}
+\theta^{\mathrm{DR}}
+=\arg\max_{\theta\in\Theta}\min_{\mathbb P\in\mathcal P}
+\widehat\mu_{\mathbb P}(\theta)
+\quad\text{s.t.}\quad
+\widehat p_{\mathbb P}(\theta)\le \alpha(p),\quad
+\forall\mathbb P\in\mathcal P,
+\label{eq:distributionally-robust-selection}
+\end{equation}
+其中基准和不利边际的$\alpha$分别为0.2\%和0.5\%。每个模糊集点使用500条配对训练序列；在相同567候选上重做选模后，共有8个候选跨模糊集训练可行，最坏总体均值较高者为水240箱、食物240箱、$B=9$。随后冻结参数，在每个分布点用30000条独立序列验收。代表性端点见\cref{tab:level4-robust}。
+
+\begin{table}[H]
+\centering
+\caption{第四关B9分布鲁棒策略的独立样本外结果}
+\label{tab:level4-robust}
+\begin{tabular}{lrrrr}
+\toprule
+边际天气 & $\rho$ & 失败率 & 95\% Wilson上界 & 总体均值/元\\
+\midrule
+基准 & 0 & 0 & 0.0128\% & 8333.5\\
+基准 & 0.35 & 0.0433\% & 0.0741\% & 8431.5\\
+不利 & 0 & 0 & 0.0128\% & 7964.2\\
+不利 & 0.35 & 0.1967\% & 0.2536\% & \textbf{8033.4}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+IID-B5策略保留为“边际频率可信且无持续性”的效率基准，B9策略则作为信息不足时的最终稳健推荐。两者差异不是算法冲突，而是保护范围扩大后的安全成本。值得注意的是，B9在高持续性下的均值略高于$\rho=0$，原因是阈值策略会在成段晴朗期连续挖矿；风险控制仍由失败率上界而非均值单调性决定。
+
 \begin{resultbox}{问题二结论}
-第三关选择54/54箱三日直达，属于全支撑精确结论\evidence{E2}。第四关选择240/240箱、B5挖矿阈值策略，属于明确分布和风险预算下的样本外推荐\evidence{E4}；二者的“最优”含义不同。
+第三关选择54/54箱三日直达，属于全支撑精确结论\evidence{E2}。第四关在IID假设下以240/240箱、B5为效率方案；把连续天气纳入$\mathcal P$后，最终推荐240/240箱、B9阈值策略，属于明确模糊集和风险预算下的分布鲁棒样本外推荐\evidence{E4}。
 \end{resultbox}

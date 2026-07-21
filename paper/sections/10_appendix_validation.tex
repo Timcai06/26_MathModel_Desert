@@ -2,7 +2,7 @@
 
 \subsection{样本外失败率区间}
 
-\cref{fig:oos-risk-intervals}同时画出失败率点估计、95\% Wilson区间和选模前固定的风险预算。第四关每档天气使用20000条序列；第六关每档天气使用20000局、60000个玩家观测。两关在不利天气下的区间上界分别为0.4809\%和0.4697\%，仍低于0.5\%预算；因此结论并非只依赖点估计“刚好过线”。
+\cref{fig:oos-risk-intervals}复核IID效率方案的失败率点估计、95\% Wilson区间和选模前固定的风险预算。第四关每档天气使用20000条序列；第六关每档天气使用20000局、60000个玩家观测。两关在IID不利天气下的区间上界分别为0.4809\%和0.4697\%，仍低于0.5\%预算；该图用于解释旧效率点，最终分布鲁棒验收另见\cref{tab:level6-robust,fig:persistence-stress}。
 
 \begin{figure}[H]
   \centering
@@ -27,6 +27,30 @@
 \end{tabular}
 \end{table}
 
+\subsection{天气持续性构造的数值复核}
+
+对每个边际分布和$\rho\in\{0,0.15,0.35,0.70\}$生成20000条30日序列。程序同时输出沙暴边际占比、相邻天气相同比例、最长连续沙暴长度和连续至少3日沙暴的频率。两项核心验收为：各$\rho$下沙暴占比仍围绕给定$p_b$波动；经验相同天气率与\cref{eq:same-weather-probability}的理论值一致。由此确认压力曲线的变化来自时间相关性，而不是天气边际被代码意外改写。
+
+\begin{table}[H]
+\centering
+\caption{Markov持续性实验的理论相同天气概率}
+\label{tab:markov-same-weather}
+\begin{tabular}{lrrrr}
+\toprule
+边际模型 & $\rho=0$ & $\rho=0.15$ & $\rho=0.35$ & $\rho=0.70$\\
+\midrule
+基准 $(0.45,0.45,0.10)$ & 0.4150 & 0.5028 & 0.6198 & 0.8245\\
+不利 $(0.35,0.50,0.15)$ & 0.3950 & 0.4858 & 0.6068 & 0.8185\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{分布鲁棒装载与偏离搜索审计}
+
+\cref{fig:robust-load-calibration}中的每个点对应一个真实二维装载组合，而非插值曲面。立即出发角色有36个可行组合，入选215/215；错峰1日角色有12个，入选225/230；错峰2日在容量内无可行点。这一结果揭示统一装载的隐藏保守性：前两名玩家无需为第三名的额外暴露共同支付库存成本。
+
+最佳响应预言机对每个角色逐一枚举70条最短路与两种风险可行错峰装载，共140个偏离。筛选表保存每条路线、等待、装载、失败率和总体均值；最终表再保存六个模糊集点及$\rho=0.70$压力点上的推荐值、最佳响应值和可利用度。因入选偏离与原策略逐日消耗相同，零偏离增益不是四舍五入造成，而是配对样本上的逐样本相等。
+
 \subsection{初始装载的局部稳健性}
 
 \cref{fig:loading-robustness}给出第六关$q=180,185,\ldots,220$的完整网格结果。装载增加使失败率下降，但每多带5箱水和5箱食物，初购成本增加75元，并挤压终值；故风险约束的可行边界比单纯追求“越安全越好”更有决策意义。入选点$q=185$在训练不利天气下失败率0.2778\%，相邻的$q=180$为0.6778\%、超过0.5\%预算；选择对一个网格步长的扰动有清晰解释。
@@ -40,7 +64,7 @@
 
 \subsection{角色差异与事前公平}
 
-固定三条路线时，前两种角色因路径对称而样本均值相等，第三种错峰角色承受额外等待损失；天气越不利，角色差从50.2元增至113.8元。\cref{eq:exante-fairness}证明，出发前均匀随机置换角色后，每名玩家的事前期望都等于三条横线所示均值。该机制不改变任何一局中的路线集合，因此不会重新引入同向边拥挤。
+固定三条路线时，前两种角色因路径与装载对称而样本均值相等，第三种错峰角色同时承担额外停留和更高安全库存成本；模糊集内角色差约为155--166元。\cref{eq:exante-fairness}证明，出发前均匀随机置换角色后，每名玩家的事前期望都等于各面板横线所示均值。该机制不改变任何一局中的路线集合，因此不会重新引入同向边拥挤。
 
 \begin{figure}[H]
   \centering
@@ -60,9 +84,10 @@
 \midrule
 确定天气全局最优 & \path{known_weather_exact.json}、逐日流水 & 求解器非Optimal或任一回放约束残差非0\\
 第三关精确MDP & \path{level3_mdp_sensitivity.csv} & Bellman值与1024序列加权值不一致\\
-第四关条件推荐 & \path{level4_parameter_search.csv}、\path{level4_oos_validation.csv} & 测试样本参与选模或区间上界超预算\\
+第四关条件推荐 & \path{level4_robust_search.csv}、\path{level4_robust_comparison.csv} & 模糊集内任一点区间上界超预算\\
 第五关纯策略均衡 & \path{problem3/summary.json} & 任一完整最佳响应偏离增益为正\\
-第六关风险推荐 & \path{level6_load_search.csv}、\path{level6_oos_comparison.csv} & 新分布下失败区间越界或存在更优可行策略\\
+第六关风险推荐 & \path{level6_role_load_calibration.csv}、\path{level6_robust_comparison.csv} & 任一固定角色区间上界越界\\
+第六关偏离稳定性 & \path{level6_oracle_screening.csv}、\path{level6_exploitability.csv} & 风险可行偏离的最坏分布收益增益为正\\
 \bottomrule
 \end{tabularx}
 \end{table}

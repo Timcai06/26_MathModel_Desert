@@ -52,6 +52,16 @@
 \end{enumerate}
 \end{resultbox}
 
+\begin{resultbox}{算法F：分布鲁棒天气—装载—偏离闭环}
+\begin{enumerate}[leftmargin=1.8em]
+  \item 由两档天气边际和$\rho\in\{0,0.15,0.35\}$生成保持平稳边际的Markov模糊集；
+  \item 对第四关567候选最大化模糊集内最坏总体均值，并在全部集合点约束失败预算；
+  \item 对第六关错峰0、1、2日角色枚举二维装载，以固定角色Wilson上界筛选；
+  \item 枚举70条最短路与风险可行错峰装载，对三名玩家分别调用最佳响应预言机；
+  \item 换用独立随机流复核六个集合点，并用$\rho=0.70$给出保护集外失效边界。
+\end{enumerate}
+\end{resultbox}
+
 \subsection{第一、二关完整逐日流水}
 
 表\ref{tab:daily-ledger}由\path{output/problem1/known_weather_exact.json}自动生成；购买栏为“水/食物”。
@@ -66,12 +76,13 @@
 \toprule
 命令 & 主要输入 & 主要输出\\
 \midrule
-\texttt{make test} & 场景、模拟器、策略与博弈代码 & 20项规则与回归测试\\
+\texttt{make test} & 场景、模拟器、策略与博弈代码 & 27项规则与回归测试\\
 \texttt{make solve-known} & 第一、二关地图和30天天气 & \texttt{known\_weather\_exact.json}\\
 \texttt{make analyze-problem2} & 第三、四关场景 & MDP敏感性和手工策略基线\\
 \texttt{make optimize-level4} & 567候选、训练/测试种子 & 第四关搜索和20000条样本外结果\\
 \texttt{make analyze-problem3} & 第五、六关多人场景 & 均衡、装载搜索、四策略比较\\
-\texttt{make figures} & 全部JSON/CSV & 12张黑白PDF/PNG图\\
+\shortstack[l]{\texttt{make analyze-}\\\texttt{robustness}} & Markov模糊集、567候选、70条最短路 & 压力曲线、角色装载、可利用度\\
+\texttt{make figures} & 全部JSON/CSV & 15张黑白PDF/PNG图\\
 \texttt{make result} & 精确流水、原Result模板 & 最终\texttt{Result.xlsx}\\
 \texttt{make deliver} & 全部计算结果与论文源文件 & 最终PDF与Excel交付物\\
 \bottomrule
